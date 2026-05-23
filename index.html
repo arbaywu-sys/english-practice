@@ -168,13 +168,10 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 .edit-field textarea,.edit-field input{width:100%;font-family:inherit;font-size:13px;padding:7px 10px;border:0.5px solid #ccc;border-radius:8px;background:white;color:#1a1a1a;resize:vertical}
 .edit-field textarea{min-height:80px}
 /* ── 浮動播放控制列 ── */
-.float-ctrl{position:fixed;right:12px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;gap:8px;z-index:90}
+.float-ctrl{position:fixed;right:12px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;gap:6px;z-index:90}
 .float-ctrl.show{display:flex}
-.fcbtn{width:50px;height:50px;border-radius:50%;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;opacity:0.85;transition:opacity .15s;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-family:inherit}
-.fcbtn:hover{opacity:1}
-.fcbtn.play{background:linear-gradient(135deg,#4CAF50,#2E7D32);color:white}
-.fcbtn.pause{background:linear-gradient(135deg,#FF9800,#E65100);color:white}
-.fcbtn.stop{background:linear-gradient(135deg,#F44336,#B71C1C);color:white}
+.fcbtn{width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:opacity .15s;font-family:inherit;background:rgba(173,216,230,0.6);color:#aaa;box-shadow:none}
+.fcbtn:hover{opacity:1;background:rgba(173,216,230,0.85)}
 </style>
 </head>
 <body>
