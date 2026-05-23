@@ -167,6 +167,14 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 .edit-field label{font-size:12px;color:#555;display:block;margin-bottom:3px}
 .edit-field textarea,.edit-field input{width:100%;font-family:inherit;font-size:13px;padding:7px 10px;border:0.5px solid #ccc;border-radius:8px;background:white;color:#1a1a1a;resize:vertical}
 .edit-field textarea{min-height:80px}
+/* ── 浮動播放控制列 ── */
+.float-ctrl{position:fixed;right:12px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;gap:8px;z-index:90}
+.float-ctrl.show{display:flex}
+.fcbtn{width:50px;height:50px;border-radius:50%;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;opacity:0.85;transition:opacity .15s;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-family:inherit}
+.fcbtn:hover{opacity:1}
+.fcbtn.play{background:linear-gradient(135deg,#4CAF50,#2E7D32);color:white}
+.fcbtn.pause{background:linear-gradient(135deg,#FF9800,#E65100);color:white}
+.fcbtn.stop{background:linear-gradient(135deg,#F44336,#B71C1C);color:white}
 </style>
 </head>
 <body>
@@ -275,13 +283,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
     <div class="eng" id="vocab-body"></div>
     <div class="vpop" id="vpop"><div id="vpen" style="font-weight:600"></div><div id="vpzh" style="color:#888;margin-top:2px"></div></div>
   </div>
-  <div class="card">
-    <div class="clabel">🔊 朗讀整段</div>
-    <div class="brow">
-      <button class="btn primary" onclick="playFull('vs2')">▶ 播放</button>
-      <button class="btn pause-btn" id="pbtn-v" data-paused="0" onclick="togglePause('pbtn-v')">⏸ 暫停</button>
-      <button class="btn" onclick="stopAll()">⏹ 停止</button>
-    </div>
+  <div class="card" style="display:none">
     <div class="st" id="vs2"></div>
   </div>
   <div class="card">
@@ -298,14 +300,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
     <div style="font-size:12px;color:#aaa;margin-bottom:8px">※ 逐字標示時間因每個使用者的裝置與語音速度不同，可能略有差異</div>
     <div class="eng" id="listen-body"></div>
   </div>
-  <div class="card">
-    <div class="clabel">⚙ 播放控制</div>
-    <div class="brow">
-      <button class="btn primary" onclick="playHL()">▶ 播放（逐字標示）</button>
-      <button class="btn pause-btn" id="pbtn-l" data-paused="0" onclick="togglePause('pbtn-l')">⏸ 暫停</button>
-      <button class="btn" onclick="stopAll()">⏹ 停止</button>
-      <button class="btn" onclick="playHL()">↺ 重播</button>
-    </div>
+  <div class="card" style="display:none">
     <div class="st" id="ls2"></div>
   </div>
 </div>
@@ -315,11 +310,6 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
   <div class="card">
     <div class="clabel">🇬🇧 英文原文</div>
     <div class="eng" id="trans-eng"></div>
-    <div class="brow" style="margin-top:12px">
-      <button class="btn primary" onclick="playFull('ts')">▶ 朗讀</button>
-      <button class="btn pause-btn" id="pbtn-t" data-paused="0" onclick="togglePause('pbtn-t')">⏸ 暫停</button>
-      <button class="btn" onclick="stopAll()">⏹ 停止</button>
-    </div>
     <div class="st" id="ts"></div>
   </div>
   <div class="card" style="border-left:3px solid #1D9E75;border-radius:0 14px 14px 0">
@@ -869,6 +859,38 @@ function playCS(){
 
 function speakWord(w){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(w); u.lang='en-US'; u.rate=0.8; u.pitch=CFG.pitch; const v=getVoice(); if(v)u.voice=v; speechSynthesis.speak(u); }
 
+/* ── 浮動播放控制 ── */
+let _fcMode = ''; /* 'vocab', 'listen', 'translate' */
+
+function fcPlay(){
+  if(_fcMode==='vocab') playFull('vs2');
+  else if(_fcMode==='listen') playHL();
+  else if(_fcMode==='translate') playFull('ts');
+}
+function fcPause(){
+  const b=document.getElementById('fc-pause');
+  if(_fcMode==='vocab') togglePause('pbtn-v');
+  else if(_fcMode==='listen') togglePause('pbtn-l');
+  else if(_fcMode==='translate') togglePause('pbtn-t');
+  /* 更新暫停按鈕文字同步 */
+  const pb=document.getElementById(_fcMode==='vocab'?'pbtn-v':_fcMode==='listen'?'pbtn-l':'pbtn-t');
+  if(pb) b.textContent=pb.dataset.paused==='1'?'▶':'⏸';
+}
+function fcStop(){
+  stopAll();
+  document.getElementById('fc-pause').textContent='⏸';
+}
+
+function showFloatCtrl(mode){
+  _fcMode=mode;
+  document.getElementById('fc-pause').textContent='⏸';
+  document.getElementById('float-ctrl').classList.add('show');
+}
+function hideFloatCtrl(){
+  _fcMode='';
+  document.getElementById('float-ctrl').classList.remove('show');
+}
+
 /* ── 單字發音評分 ── */
 let currentWordIdx = -1;
 let wordRecognition = null;
@@ -1291,7 +1313,7 @@ function toggleRec(){
   }
 }
 function playRec(){if(recBlob)new Audio(URL.createObjectURL(recBlob)).play();}
-function sw(name,el){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.getElementById('p-'+name).classList.add('on');el.classList.add('on');stopAll();}
+function sw(name,el){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.getElementById('p-'+name).classList.add('on');el.classList.add('on');stopAll();if(['vocab','listen','translate'].includes(name))showFloatCtrl(name);else hideFloatCtrl();}
 function delArt(){ alert('請到 Google Sheets 刪除對應列，程式會在下次開啟時自動更新。'); }
 /* ══════════════════════════════════════
    主題 + 難易度 篩選系統
@@ -1604,6 +1626,13 @@ if(!loadFromCache()){
   setTimeout(()=>{ loadLatest(); }, 100);
 }
 </script>
+
+<!-- 浮動播放控制列 -->
+<div class="float-ctrl" id="float-ctrl">
+  <button class="fcbtn play" id="fc-play" onclick="fcPlay()" title="播放">▶</button>
+  <button class="fcbtn pause" id="fc-pause" onclick="fcPause()" title="暫停/繼續">⏸</button>
+  <button class="fcbtn stop" onclick="fcStop()" title="停止">⏹</button>
+</div>
 
 <!-- 管理員入口 -->
 <button class="admin-btn" onclick="openAdmin()" title="管理員登入">⚙</button>
