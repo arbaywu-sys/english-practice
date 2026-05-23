@@ -146,8 +146,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
   .tab { padding: 8px 10px; }
   .brow { gap: 6px; }
 }
-.admin-btn{position:fixed;bottom:16px;right:16px;width:40px;height:40px;border-radius:50%;background:#1a1a1a;color:white;border:none;cursor:pointer;font-size:18px;z-index:200;opacity:0.3;transition:opacity .2s;display:flex;align-items:center;justify-content:center}
-.admin-btn:hover{opacity:1}
+
 .admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:1rem}
 .admin-overlay.show{display:flex}
 .admin-modal{background:white;border-radius:16px;padding:1.5rem;max-width:640px;width:100%;max-height:90vh;overflow-y:auto}
@@ -168,10 +167,12 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 .edit-field textarea,.edit-field input{width:100%;font-family:inherit;font-size:13px;padding:7px 10px;border:0.5px solid #ccc;border-radius:8px;background:white;color:#1a1a1a;resize:vertical}
 .edit-field textarea{min-height:80px}
 /* ── 浮動播放控制列 ── */
-.float-ctrl{position:fixed;right:12px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;gap:10px;z-index:90}
+.float-ctrl{position:fixed;right:12px;bottom:80px;display:none;flex-direction:column;gap:10px;z-index:90}
 .float-ctrl.show{display:flex}
 .fcbtn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:opacity .15s;font-family:inherit;background:rgba(173,216,230,0.6);color:#F5F0E8;box-shadow:none;-webkit-appearance:none;appearance:none;line-height:1}
 .fcbtn:hover{opacity:1;background:rgba(173,216,230,0.85)}
+.admin-btn{position:fixed;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:#1a1a1a;color:white;border:none;cursor:pointer;font-size:16px;z-index:200;opacity:0.3;transition:opacity .2s;display:flex;align-items:center;justify-content:center}
+.admin-btn:hover{opacity:1}
 </style>
 </head>
 <body>
