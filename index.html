@@ -167,12 +167,11 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 .edit-field textarea,.edit-field input{width:100%;font-family:inherit;font-size:13px;padding:7px 10px;border:0.5px solid #ccc;border-radius:8px;background:white;color:#1a1a1a;resize:vertical}
 .edit-field textarea{min-height:80px}
 /* ── 浮動播放控制列 ── */
-.float-ctrl{position:fixed;right:12px;bottom:80px;display:none;flex-direction:column;gap:10px;z-index:90}
+.float-ctrl{position:fixed;right:10px;bottom:100px;display:none;flex-direction:column;gap:8px;z-index:90}
 .float-ctrl.show{display:flex}
-.fcbtn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:opacity .15s;font-family:inherit;background:rgba(173,216,230,0.6);color:#F5F0E8;box-shadow:none;-webkit-appearance:none;appearance:none;line-height:1}
-.fcbtn:hover{opacity:1;background:rgba(173,216,230,0.85)}
-.admin-btn{position:fixed;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:#1a1a1a;color:white;border:none;cursor:pointer;font-size:16px;z-index:200;opacity:0.3;transition:opacity .2s;display:flex;align-items:center;justify-content:center}
-.admin-btn:hover{opacity:1}
+.fcbtn{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;background:rgba(173,216,230,0.55);-webkit-appearance:none;appearance:none;padding:0;font-size:18px;line-height:1}
+.admin-btn{position:fixed;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:rgba(180,180,180,0.25);color:#ccc;border:none;cursor:pointer;font-size:11px;z-index:200;opacity:0.4;transition:opacity .2s;display:flex;align-items:center;justify-content:center}
+.admin-btn:hover{opacity:0.8}
 </style>
 </head>
 <body>
@@ -868,22 +867,22 @@ function fcPlay(){
 function fcPause(){
   const pbId=_fcMode==='vocab'?'pbtn-v':_fcMode==='listen'?'pbtn-l':'pbtn-t';
   togglePause(pbId);
-  /* 同步浮動按鈕狀態 */
   setTimeout(()=>{
     const pb=document.getElementById(pbId);
-    const fc=document.getElementById('fc-pause');
-    if(pb&&fc) fc.innerHTML=pb.dataset.paused==='1'?'&#9654;':'&#9646;&#9646;';
+    const txt=document.getElementById('fc-pause-txt');
+    if(!pb||!txt) return;
+    txt.textContent=pb.dataset.paused==='1'?'▶️':'⏸️';
   },50);
 }
 function fcStop(){
   stopAll();
-  const fc=document.getElementById('fc-pause');
-  if(fc) fc.innerHTML='&#9646;&#9646;';
+  const txt=document.getElementById('fc-pause-txt');
+  if(txt) txt.textContent='⏸️';
 }
 
 function showFloatCtrl(mode){
   _fcMode=mode;
-  document.getElementById('fc-pause').textContent='⏸';
+  const _pi=document.getElementById('fc-pause-txt'); if(_pi) _pi.textContent='⏸️';
   document.getElementById('float-ctrl').classList.add('show');
 }
 function hideFloatCtrl(){
@@ -1633,10 +1632,17 @@ if(document.readyState==='complete'||document.readyState==='interactive'){
 
 <!-- 浮動播放控制列 -->
 <div class="float-ctrl" id="float-ctrl">
-  <button class="fcbtn play" id="fc-play" onclick="fcPlay()" title="播放">&#9654;</button>
-  <button class="fcbtn pause" id="fc-pause" onclick="fcPause()" title="暫停/繼續">&#9646;&#9646;</button>
-  <button class="fcbtn stop" onclick="fcStop()" title="停止">&#9632;</button>
+  <button class="fcbtn" id="fc-play" onclick="fcPlay()" title="播放">▶️</button>
+  <button class="fcbtn" id="fc-pause" onclick="fcPause()" title="暫停/繼續">
+    <span id="fc-pause-txt">⏸️</span>
+  </button>
+  <button class="fcbtn" id="fc-stop" onclick="fcStop()" title="停止">⏹️</button>
 </div>
+
+<!-- 隱藏暫停狀態追蹤按鈕（不顯示，供 togglePause 使用） -->
+<button id="pbtn-v" class="pause-btn" data-paused="0" style="display:none"></button>
+<button id="pbtn-l" class="pause-btn" data-paused="0" style="display:none"></button>
+<button id="pbtn-t" class="pause-btn" data-paused="0" style="display:none"></button>
 
 <script>
 /* 浮動按鈕初始化：在 HTML 元素存在後執行 */
