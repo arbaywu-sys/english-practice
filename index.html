@@ -1616,6 +1616,7 @@ async function deleteArt(i){
 }
 
 speechSynthesis.onvoiceschanged=()=>{};
+showFloatCtrl('vocab'); /* 預設在單字學習，顯示浮動按鈕 */
 
 /* 啟動：先用快取顯示，同時背景更新 */
 if(!loadFromCache()){
