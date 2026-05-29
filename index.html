@@ -1684,12 +1684,8 @@ async function deleteArt(i){
 /* ── 中英對照：單字浮窗 ── */
 function showWordPopup(word, zh, event){
   const popup = document.getElementById('word-popup');
-  const enEl  = document.getElementById('wp-en');
   const zhEl  = document.getElementById('wp-zh');
   if(!popup || !zhEl) return;
-
-  /* 英文字（白色粗體，固定顯示） */
-  if(enEl) enEl.textContent = word;
 
   /* 中文內容 + 樣式切換 */
   zhEl.textContent = zh;
@@ -1750,7 +1746,6 @@ if(document.readyState==='complete'||document.readyState==='interactive'){
 
 <!-- 單字點擊浮窗 -->
 <div class="word-popup" id="word-popup">
-  <div class="word-popup-en" id="wp-en"></div>
   <div id="wp-zh"></div>
 </div>
 
