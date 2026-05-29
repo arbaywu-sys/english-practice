@@ -1728,6 +1728,13 @@ document.addEventListener('click', function(e){
   }
 });
 
+/* ── 頁面關閉時強制停止麥克風 ── */
+window.addEventListener('beforeunload', () => {
+  if (mediaRec && mediaRec.state === 'recording') {
+    mediaRec.stop();
+  }
+});
+
 speechSynthesis.onvoiceschanged=()=>{};
 /* 啟動：先用快取顯示，同時背景更新 */
 if(!loadFromCache()){
