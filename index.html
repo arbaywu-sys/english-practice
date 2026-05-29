@@ -106,7 +106,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .star-filter-reset{font-size:11px;color:#888;cursor:pointer;margin-left:6px;padding:2px 6px;border:0.5px solid #ddd;border-radius:8px;background:white;font-family:inherit}
 .star-filter-reset:hover{background:#f0f0f0}
 
-/* ── 單字點擊樣式 ── */
+/* 聽力練習點字高亮 */
+.wspan.clicked{background:#e8e8e4;border-radius:3px;transition:background .3s}
 .word-clickable{cursor:pointer;display:inline}
 .word-clickable:hover{background:rgba(24,95,165,0.08);border-radius:3px}
 .word-popup{position:fixed;background:#1a1a1a;color:white;padding:8px 14px;border-radius:10px;font-size:14px;z-index:500;display:none;max-width:200px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);pointer-events:none}
@@ -285,7 +286,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 <!-- 單字學習 -->
 <div id="p-vocab" class="panel on">
   <div class="card">
-    <div class="clabel">👆 點擊任何單字聆聽發音</div>
+    <div class="clabel">👆 點擊藍色單字聆聽發音</div>
     <div class="eng" id="vocab-body"></div>
     <div class="vpop" id="vpop"><div id="vpen" style="font-weight:600"></div><div id="vpzh" style="color:#888;margin-top:2px"></div></div>
   </div>
@@ -302,7 +303,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 <!-- 聽力練習 -->
 <div id="p-listen" class="panel">
   <div class="card">
-    <div class="clabel">🎧 播放時逐字標示</div>
+    <div class="clabel">🎧 播放時逐字標示｜👆 點擊任何單字聆聽發音</div>
     <div style="font-size:12px;color:#aaa;margin-bottom:8px">※ 逐字標示時間因每個使用者的裝置與語音速度不同，可能略有差異</div>
     <div class="eng" id="listen-body"></div>
   </div>
@@ -1219,36 +1220,21 @@ function renderHeader(){
   document.getElementById('art-header').innerHTML=`<span class="badge">${a.day} · ${a.cat}</span>${datePart}${starPart}<div class="htitle">${a.title}</div>`;
 }
 function renderVocab(){
-  const vocab=cur().vocab||[];
-  const vocabMap={};
-  vocab.forEach(v=>{ vocabMap[v.en.toLowerCase()]=v; });
-
-  /* 把英文段落每個字包成可點擊的span */
   let h=cur().eng;
-  /* 先替換已標注單字 */
-  vocab.forEach(v=>{
+  (cur().vocab||[]).forEach(v=>{
     const re=new RegExp('\\b'+v.en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','g');
-    h=h.replace(re,`__VOCAB_${v.en}__`);
-  });
-  /* 把所有英文字包成可點擊span */
-  h=h.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,(match)=>{
-    return `<span class="word-clickable" onclick="onVocabWordClick(this,'${match.replace(/'/g,"\\'")}',event)">${match}</span>`;
-  });
-  /* 還原標注單字，加上藍色樣式 */
-  vocab.forEach(v=>{
-    h=h.replace(`__VOCAB_${v.en}__`,
-      `<button class="vchip" onclick="showVpop(this,'${v.en.replace(/'/g,"\\'")}','${v.zh.replace(/'/g,"\\'")}',event)">${v.en}</button> <span class="mchip">(${v.zh})</span>`);
+    h=h.replace(re,`<button class="vchip" onclick="showVpop(this,'${v.en.replace(/'/g,"\\'")}','${v.zh.replace(/'/g,"\\'")}',event)">${v.en}</button> <span class="mchip">(${v.zh})</span>`);
   });
   document.getElementById('vocab-body').innerHTML=h;
 }
-
-function onVocabWordClick(el, word, event){
-  event.stopPropagation();
-  speakWord(word);
-  /* 簡單浮窗顯示單字 */
-  showWordPopup(word, null, event);
+function renderListen(){
+  const ws=cur().eng.split(' ');
+  document.getElementById('listen-body').innerHTML=ws.map((w,i)=>{
+    const clean=w.replace(/[^a-zA-Z']/g,'');
+    const onclick=clean?`onclick="event.stopPropagation();speakWord('${clean.replace(/'/g,"\'")}')" style="cursor:pointer"`:'';
+    return `<span class="wspan" id="lw${i}" ${onclick}>${w} </span>`;
+  }).join('');
 }
-function renderListen(){const ws=cur().eng.split(' ');document.getElementById('listen-body').innerHTML=ws.map((w,i)=>`<span class="wspan" id="lw${i}">${w} </span>`).join('');}
 function renderTranslate(){
   const words=cur().eng.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,
     (match)=>`<span class="word-clickable" onclick="onTransWordClick(this,'${match.replace(/'/g,"\\'")}',event)">${match}</span>`);
@@ -1703,7 +1689,6 @@ if(document.readyState==='complete'||document.readyState==='interactive'){
 
 <!-- 單字點擊浮窗 -->
 <div class="word-popup" id="word-popup">
-  <div class="word-popup-en" id="wp-en"></div>
   <div class="word-popup-zh" id="wp-zh"></div>
 </div>
 
