@@ -881,7 +881,8 @@ function showWordPopup(word, zh, event){
   clearTimeout(popup._timer);
   popup._timer=setTimeout(()=>popup.classList.remove('show'),3000);
 }
-document.addEventListener('click',()=>{
+document.addEventListener('click',(e)=>{
+  if(e.target.classList.contains('word-clickable')) return;
   const p=document.getElementById('word-popup');
   if(p) p.classList.remove('show');
 });
