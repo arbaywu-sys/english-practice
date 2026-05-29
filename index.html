@@ -111,11 +111,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .wspan[onclick]:hover{background:rgba(24,95,165,0.08);border-radius:3px;cursor:pointer}
 .word-clickable{cursor:pointer;display:inline}
 .word-clickable:hover{background:rgba(24,95,165,0.08);border-radius:3px}
-.word-popup{position:fixed;background:#1a1a1a;color:white;padding:8px 14px;border-radius:10px;font-size:14px;z-index:500;display:none;max-width:200px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);pointer-events:none}
+.word-popup{position:absolute;background:#1a1a1a;color:white;padding:10px 16px;border-radius:12px;font-size:15px;z-index:500;display:none;max-width:220px;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,0.28);pointer-events:none}
 .word-popup.show{display:block}
-.word-popup-en{font-weight:600;font-size:15px;margin-bottom:3px}
-.word-popup-zh{color:#aaa;font-size:13px}
-.word-popup-loading{color:#aaa;font-size:13px}
+.word-popup-en{font-weight:700;font-size:16px;margin-bottom:4px;color:#ffffff}
+.word-popup-zh{color:#FFE066;font-size:15px;font-weight:700;letter-spacing:0.5px}
+.word-popup-loading{color:#90CAF9;font-size:14px;font-weight:500}
 
 /* ── 流體式字體（自動適應所有裝置） ── */
 /* clamp(最小, 流體, 最大) - 根據螢幕寬度自動縮放 */
@@ -1684,51 +1684,50 @@ async function deleteArt(i){
 /* ── 中英對照：單字浮窗 ── */
 function showWordPopup(word, zh, event){
   const popup = document.getElementById('word-popup');
+  const enEl  = document.getElementById('wp-en');
   const zhEl  = document.getElementById('wp-zh');
   if(!popup || !zhEl) return;
 
-  /* 填入內容 */
+  /* 英文字（白色粗體，固定顯示） */
+  if(enEl) enEl.textContent = word;
+
+  /* 中文內容 + 樣式切換 */
   zhEl.textContent = zh;
+  const isLoading = (zh === '查詢中…');
+  zhEl.className = isLoading ? 'word-popup-loading' : 'word-popup-zh';
 
-  /* 判斷是「查詢中」還是正常結果，切換樣式 */
-  if(zh === '查詢中…'){
-    zhEl.className = 'word-popup-loading';
-  } else {
-    zhEl.className = 'word-popup-zh';
-  }
+  /* 先讓 popup 可見才能量尺寸 */
+  popup.classList.add('show');
 
-  /* 定位：跟著點擊位置，往上偏移避免被手指遮住 */
+  /* 定位：跟著點擊位置，盡量浮在單字上方 */
   const x = event.clientX;
   const y = event.clientY;
-
-  popup.style.display = 'block';          /* 先顯示才能取得尺寸 */
-  const pw = popup.offsetWidth;
-  const ph = popup.offsetHeight;
+  const pw = popup.offsetWidth  || 160;
+  const ph = popup.offsetHeight || 60;
   const vw = window.innerWidth;
 
   let left = x - pw / 2;
   if(left < 8) left = 8;
   if(left + pw > vw - 8) left = vw - pw - 8;
 
-  let top = y - ph - 14;
-  if(top < 8) top = y + 20;              /* 若上方空間不足，改到下方 */
+  let top = y - ph - 16;
+  if(top < 8) top = y + 22;   /* 上方不足就改到下方 */
 
   popup.style.left = left + 'px';
   popup.style.top  = (top + window.scrollY) + 'px';
-  popup.style.position = 'absolute';
-  popup.classList.add('show');
 
-  /* 3 秒後自動關閉（非「查詢中」狀態才自動關閉） */
+  /* 計時器：查詢中不消失；翻譯回來後 1.5 秒消失 */
   clearTimeout(popup._hideTimer);
-  if(zh !== '查詢中…'){
-    popup._hideTimer = setTimeout(()=>popup.classList.remove('show'), 3000);
+  if(!isLoading){
+    popup._hideTimer = setTimeout(()=>popup.classList.remove('show'), 1500);
   }
 }
 
-/* 點擊空白處關閉浮窗 */
+/* 點擊空白處立即關閉浮窗 */
 document.addEventListener('click', function(e){
   const popup = document.getElementById('word-popup');
-  if(popup && !popup.contains(e.target)){
+  if(popup && !e.target.closest('.word-clickable')){
+    clearTimeout(popup._hideTimer);
     popup.classList.remove('show');
   }
 });
@@ -1751,7 +1750,8 @@ if(document.readyState==='complete'||document.readyState==='interactive'){
 
 <!-- 單字點擊浮窗 -->
 <div class="word-popup" id="word-popup">
-  <div class="word-popup-zh" id="wp-zh"></div>
+  <div class="word-popup-en" id="wp-en"></div>
+  <div id="wp-zh"></div>
 </div>
 
 <!-- 浮動播放控制列 -->
