@@ -106,6 +106,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .star-filter-reset{font-size:11px;color:#888;cursor:pointer;margin-left:6px;padding:2px 6px;border:0.5px solid #ddd;border-radius:8px;background:white;font-family:inherit}
 .star-filter-reset:hover{background:#f0f0f0}
 
+/* ── 單字點擊樣式 ── */
+.word-clickable{cursor:pointer;display:inline}
+.word-clickable:hover{background:rgba(24,95,165,0.08);border-radius:3px}
+.word-popup{position:fixed;background:#1a1a1a;color:white;padding:8px 14px;border-radius:10px;font-size:14px;z-index:500;display:none;max-width:200px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);pointer-events:none}
+.word-popup.show{display:block}
+.word-popup-en{font-weight:600;font-size:15px;margin-bottom:3px}
+.word-popup-zh{color:#aaa;font-size:13px}
+.word-popup-loading{color:#aaa;font-size:13px}
+
 /* ── 流體式字體（自動適應所有裝置） ── */
 /* clamp(最小, 流體, 最大) - 根據螢幕寬度自動縮放 */
 body { font-size: clamp(17px, 4.5vw, 17px); }
@@ -276,7 +285,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 <!-- 單字學習 -->
 <div id="p-vocab" class="panel on">
   <div class="card">
-    <div class="clabel">👆 點擊藍色單字聆聽發音</div>
+    <div class="clabel">👆 點擊任何單字聆聽發音</div>
     <div class="eng" id="vocab-body"></div>
     <div class="vpop" id="vpop"><div id="vpen" style="font-weight:600"></div><div id="vpzh" style="color:#888;margin-top:2px"></div></div>
   </div>
@@ -305,7 +314,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 <!-- 中英對照 -->
 <div id="p-translate" class="panel">
   <div class="card">
-    <div class="clabel">🇬🇧 英文原文</div>
+    <div class="clabel">👆 點擊任何單字查看中文意思</div>
     <div class="eng" id="trans-eng"></div>
     <div class="st" id="ts"></div>
   </div>
@@ -417,7 +426,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 </div>
 <script>
 const SHEET_ID = "1zrH98sk6HMrLuZxSumKq0tH9PGWh878xw7PzQUG8v8U";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVg1woFy_XNx91qWzyZS-QDskAHauCGmfXbsLpJJ2D6-_vcemQQ9QbDycbWezsZIlM/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBW8Fpv9ccYnnr9Snj6WTnbi8yOliTkzGWqWAn26EvZeXG2vUSld0k4SNTSfmUSflE/exec";
 const CACHE_KEY = "eng_arts_cache";
 const CACHE_TS_KEY = "eng_arts_ts";
 const CACHE_HOURS = 1; /* 快取 1 小時，之後自動重新檢查 */
@@ -854,6 +863,27 @@ function playCS(){
   run(0);
 }
 
+function showWordPopup(word, zh, event){
+  const popup=document.getElementById('word-popup');
+  const wpEn=document.getElementById('wp-en');
+  const wpZh=document.getElementById('wp-zh');
+  wpEn.textContent=word;
+  wpZh.textContent=zh||'';
+  /* 位置：點擊處上方 */
+  const x=Math.min(event.clientX, window.innerWidth-220);
+  const y=Math.max(event.clientY-60, 10);
+  popup.style.left=x+'px';
+  popup.style.top=y+'px';
+  popup.classList.add('show');
+  /* 3秒後自動消失 */
+  clearTimeout(popup._timer);
+  popup._timer=setTimeout(()=>popup.classList.remove('show'),3000);
+}
+document.addEventListener('click',()=>{
+  const p=document.getElementById('word-popup');
+  if(p) p.classList.remove('show');
+});
+
 function speakWord(w){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(w); u.lang='en-US'; u.rate=0.8; u.pitch=CFG.pitch; const v=getVoice(); if(v)u.voice=v; speechSynthesis.speak(u); }
 
 /* ── 浮動播放控制 ── */
@@ -1189,15 +1219,56 @@ function renderHeader(){
   document.getElementById('art-header').innerHTML=`<span class="badge">${a.day} · ${a.cat}</span>${datePart}${starPart}<div class="htitle">${a.title}</div>`;
 }
 function renderVocab(){
+  const vocab=cur().vocab||[];
+  const vocabMap={};
+  vocab.forEach(v=>{ vocabMap[v.en.toLowerCase()]=v; });
+
+  /* 把英文段落每個字包成可點擊的span */
   let h=cur().eng;
-  (cur().vocab||[]).forEach(v=>{
+  /* 先替換已標注單字 */
+  vocab.forEach(v=>{
     const re=new RegExp('\\b'+v.en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','g');
-    h=h.replace(re,`<button class="vchip" onclick="showVpop(this,'${v.en.replace(/'/g,"\\'")}','${v.zh.replace(/'/g,"\\'")}',event)">${v.en}</button> <span class="mchip">(${v.zh})</span>`);
+    h=h.replace(re,`__VOCAB_${v.en}__`);
+  });
+  /* 把所有英文字包成可點擊span */
+  h=h.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,(match)=>{
+    return `<span class="word-clickable" onclick="onVocabWordClick(this,'${match.replace(/'/g,"\\'")}',event)">${match}</span>`;
+  });
+  /* 還原標注單字，加上藍色樣式 */
+  vocab.forEach(v=>{
+    h=h.replace(`__VOCAB_${v.en}__`,
+      `<button class="vchip" onclick="showVpop(this,'${v.en.replace(/'/g,"\\'")}','${v.zh.replace(/'/g,"\\'")}',event)">${v.en}</button> <span class="mchip">(${v.zh})</span>`);
   });
   document.getElementById('vocab-body').innerHTML=h;
 }
+
+function onVocabWordClick(el, word, event){
+  event.stopPropagation();
+  speakWord(word);
+  /* 簡單浮窗顯示單字 */
+  showWordPopup(word, null, event);
+}
 function renderListen(){const ws=cur().eng.split(' ');document.getElementById('listen-body').innerHTML=ws.map((w,i)=>`<span class="wspan" id="lw${i}">${w} </span>`).join('');}
-function renderTranslate(){document.getElementById('trans-eng').textContent=cur().eng;document.getElementById('trans-zh').textContent=cur().zh;}
+function renderTranslate(){
+  const words=cur().eng.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,
+    (match)=>`<span class="word-clickable" onclick="onTransWordClick(this,'${match.replace(/'/g,"\\'")}',event)">${match}</span>`);
+  document.getElementById('trans-eng').innerHTML=words;
+  document.getElementById('trans-zh').textContent=cur().zh;
+}
+
+async function onTransWordClick(el, word, event){
+  event.stopPropagation();
+  showWordPopup(word,'查詢中…',event);
+  try{
+    const res=await fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'translate',word,pwd:_adminPwd||'__public__'})
+    });
+    const json=await res.json();
+    if(json.success&&json.translation) showWordPopup(word,json.translation,event);
+    else showWordPopup(word,'查無結果',event);
+  }catch(e){ showWordPopup(word,'查詢失敗',event); }
+}
 function renderSentList(){
   const ss=sents(),zz=sentsZh();
   document.getElementById('sent-list').innerHTML=ss.map((s,i)=>`
@@ -1629,6 +1700,12 @@ if(document.readyState==='complete'||document.readyState==='interactive'){
   showFloatCtrl('vocab');
 }
 </script>
+
+<!-- 單字點擊浮窗 -->
+<div class="word-popup" id="word-popup">
+  <div class="word-popup-en" id="wp-en"></div>
+  <div class="word-popup-zh" id="wp-zh"></div>
+</div>
 
 <!-- 浮動播放控制列 -->
 <div class="float-ctrl" id="float-ctrl">
