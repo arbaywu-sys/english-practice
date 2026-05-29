@@ -107,7 +107,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .star-filter-reset:hover{background:#f0f0f0}
 
 /* 聽力練習點字高亮 */
-.wspan.clicked{background:#e8e8e4;border-radius:3px;transition:background .3s}
+.wspan.clicked{background:rgba(24,95,165,0.08);border-radius:3px}
+.wspan[onclick]:hover{background:rgba(24,95,165,0.08);border-radius:3px;cursor:pointer}
 .word-clickable{cursor:pointer;display:inline}
 .word-clickable:hover{background:rgba(24,95,165,0.08);border-radius:3px}
 .word-popup{position:fixed;background:#1a1a1a;color:white;padding:8px 14px;border-radius:10px;font-size:14px;z-index:500;display:none;max-width:200px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);pointer-events:none}
@@ -1109,12 +1110,7 @@ function save(){ saveCache(); } /* 文章從 Sheets 讀取，本地只存快取 
 function cur(){const arts=getArts();return arts[ci]||arts[0]||ARTS[0];}
 function clearLit(){document.querySelectorAll('.wspan').forEach(e=>e.classList.remove('lit'));}
 function listenWordClick(el, word){
-  /* 移除舊底色，加上新底色 */
-  document.querySelectorAll('.wspan').forEach(e=>e.classList.remove('clicked'));
-  el.classList.add('clicked');
   speakWord(word);
-  /* 1.5 秒後移除底色 */
-  setTimeout(()=>el.classList.remove('clicked'), 1500);
 }
 function sents(){return cur().eng.match(/[^.!?]+[.!?]+/g)||[cur().eng];}
 function sentsZh(){return cur().zh.match(/[^。！？]+[。！？]+/g)||[cur().zh];}
@@ -1239,7 +1235,7 @@ function renderListen(){
   const ws=cur().eng.split(' ');
   document.getElementById('listen-body').innerHTML=ws.map((w,i)=>{
     const clean=w.replace(/[^a-zA-Z']/g,'');
-    const onclick=clean?`onclick="event.stopPropagation();listenWordClick(this,'${clean.replace(/'/g,"\'")}')" style="cursor:pointer"`:'';
+    const onclick=clean?`onclick="event.stopPropagation();speakWord('${clean.replace(/'/g,"\'")}')"`:'';
     return `<span class="wspan" id="lw${i}" ${onclick}>${w} </span>`;
   }).join('');
 }
@@ -1250,22 +1246,23 @@ function renderTranslate(){
   document.getElementById('trans-zh').textContent=cur().zh;
 }
 
-function onTransWordClick(el, word, event){
+async function onTransWordClick(el, word, event){
   event.stopPropagation();
-  /* 先查詞彙表 */
+  /* 先查詞彙表，有的話直接顯示不需要呼叫 API */
   const vocab=cur().vocab||[];
   const found=vocab.find(v=>v.en.toLowerCase()===word.toLowerCase());
   if(found){ showWordPopup(word, found.zh, event); return; }
-  /* 詞彙表沒有 → 用 MyMemory 免費翻譯 API */
+  /* 詞彙表沒有 → 呼叫 Google LanguageApp 翻譯 */
   showWordPopup(word,'查詢中…',event);
-  fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|zh-TW`)
-    .then(r=>r.json())
-    .then(d=>{
-      const t=d&&d.responseData&&d.responseData.translatedText;
-      if(t&&t!==word) showWordPopup(word, t, event);
-      else showWordPopup(word,'查無結果',event);
-    })
-    .catch(()=>showWordPopup(word,'查詢失敗',event));
+  try{
+    const res=await fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'translate', word})
+    });
+    const json=await res.json();
+    if(json.success&&json.translation) showWordPopup(word, json.translation, event);
+    else showWordPopup(word,'查無結果',event);
+  }catch(e){ showWordPopup(word,'查詢失敗',event); }
 }
 function renderSentList(){
   const ss=sents(),zz=sentsZh();
