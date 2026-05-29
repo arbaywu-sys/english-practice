@@ -1681,6 +1681,58 @@ async function deleteArt(i){
   alert('✅ 文章已刪除！');
 }
 
+/* ── 中英對照：單字浮窗 ── */
+function showWordPopup(word, zh, event){
+  const popup = document.getElementById('word-popup');
+  const zhEl  = document.getElementById('wp-zh');
+  if(!popup || !zhEl) return;
+
+  /* 填入內容 */
+  zhEl.textContent = zh;
+
+  /* 判斷是「查詢中」還是正常結果，切換樣式 */
+  if(zh === '查詢中…'){
+    zhEl.className = 'word-popup-loading';
+  } else {
+    zhEl.className = 'word-popup-zh';
+  }
+
+  /* 定位：跟著點擊位置，往上偏移避免被手指遮住 */
+  const x = event.clientX;
+  const y = event.clientY;
+
+  popup.style.display = 'block';          /* 先顯示才能取得尺寸 */
+  const pw = popup.offsetWidth;
+  const ph = popup.offsetHeight;
+  const vw = window.innerWidth;
+
+  let left = x - pw / 2;
+  if(left < 8) left = 8;
+  if(left + pw > vw - 8) left = vw - pw - 8;
+
+  let top = y - ph - 14;
+  if(top < 8) top = y + 20;              /* 若上方空間不足，改到下方 */
+
+  popup.style.left = left + 'px';
+  popup.style.top  = (top + window.scrollY) + 'px';
+  popup.style.position = 'absolute';
+  popup.classList.add('show');
+
+  /* 3 秒後自動關閉（非「查詢中」狀態才自動關閉） */
+  clearTimeout(popup._hideTimer);
+  if(zh !== '查詢中…'){
+    popup._hideTimer = setTimeout(()=>popup.classList.remove('show'), 3000);
+  }
+}
+
+/* 點擊空白處關閉浮窗 */
+document.addEventListener('click', function(e){
+  const popup = document.getElementById('word-popup');
+  if(popup && !popup.contains(e.target)){
+    popup.classList.remove('show');
+  }
+});
+
 speechSynthesis.onvoiceschanged=()=>{};
 /* 啟動：先用快取顯示，同時背景更新 */
 if(!loadFromCache()){
