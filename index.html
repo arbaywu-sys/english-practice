@@ -886,7 +886,7 @@ document.addEventListener('click',()=>{
   if(p) p.classList.remove('show');
 });
 
-function speakWord(w){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(w); u.lang='en-US'; u.rate=0.8; u.pitch=CFG.pitch; const v=getVoice(); if(v)u.voice=v; speechSynthesis.speak(u); }
+function speakWord(w){ if(w&&w.dataset) w=w.dataset.w; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(w); u.lang='en-US'; u.rate=0.8; u.pitch=CFG.pitch; const v=getVoice(); if(v)u.voice=v; speechSynthesis.speak(u); }
 
 /* ── 浮動播放控制 ── */
 let _fcMode = ''; /* 'vocab', 'listen', 'translate' */
@@ -1235,7 +1235,7 @@ function renderListen(){
   const ws=cur().eng.split(' ');
   document.getElementById('listen-body').innerHTML=ws.map((w,i)=>{
     const clean=w.replace(/[^a-zA-Z']/g,'');
-    const onclick=clean?`onclick="event.stopPropagation();speakWord('${clean.replace(/'/g,"\'")}')"`:'';
+    const onclick=clean?`onclick="event.stopPropagation();speakWord(this.dataset.w)" data-w="${clean.replace(/"/g,'&quot;')}"`:'';
     return `<span class="wspan" id="lw${i}" ${onclick}>${w} </span>`;
   }).join('');
 }
