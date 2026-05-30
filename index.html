@@ -438,7 +438,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 </div>
 <script>
 const SHEET_ID = "1zrH98sk6HMrLuZxSumKq0tH9PGWh878xw7PzQUG8v8U";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxin6Xxi8c6AyW8sUIpBnHjKBFpbhDcKbS86YpkeGLDC_tu8izYtr988SuqfPo35egt/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8J5T3fJyVdYye5CjQhwsZbS7s6DgCv_2qQjKCSi3cKoaGT5Sc1CxcJVOkxfGsxFuv/exec";
 const CACHE_KEY = "eng_arts_cache";
 const CACHE_TS_KEY = "eng_arts_ts";
 const CACHE_HOURS = 1; /* 快取 1 小時，之後自動重新檢查 */
@@ -923,25 +923,28 @@ function savePhonLS(){
   try{localStorage.setItem(PHON_LS_KEY,JSON.stringify(_phonCache));}catch(e){}
 }
 
-/* 從 Free Dictionary API 取 IPA 音標（只接受 /…/ 格式，過濾掉 ARPAbet） */
+/* 從 Free Dictionary API 取 IPA 音標（優先有音訊的，過濾 ARPAbet 和罕見字元） */
 async function fetchPhoneticFromFreeDic(word){
   try{
     const res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
     if(!res.ok) return null;
     const json=await res.json();
     if(!Array.isArray(json)) return null;
-    const candidates=[];
+    const withAudio=[], withoutAudio=[];
     for(const entry of json){
-      if(entry.phonetic&&entry.phonetic.trim()) candidates.push(entry.phonetic.trim());
+      if(entry.phonetic&&entry.phonetic.trim()) withoutAudio.push(entry.phonetic.trim());
       if(entry.phonetics){
         for(const ph of entry.phonetics){
-          if(ph.text&&ph.text.trim()) candidates.push(ph.text.trim());
+          if(!ph.text||!ph.text.trim()) continue;
+          if(ph.audio&&ph.audio.trim()) withAudio.push(ph.text.trim());
+          else withoutAudio.push(ph.text.trim());
         }
       }
     }
-    /* 只接受真正的 IPA：必須包含 / 且不含純大寫字串（ARPAbet 是大寫） */
-    const ipa=candidates.find(c=>c.includes('/')&&!/\b[A-Z]{2,}\b/.test(c));
-    return ipa||null;
+    /* 過濾：必須有 /，無連續大寫（ARPAbet），無罕見字元（ɯ等） */
+    const isValidIPA=c=>c.includes('/')&&!/[A-Z]{2,}/.test(c)&&!/[ɯʘǀǁǂ]/.test(c);
+    /* 優先有音訊的 → 再取無音訊的 */
+    return withAudio.find(isValidIPA)||withoutAudio.find(isValidIPA)||null;
   }catch(e){}
   return null;
 }
