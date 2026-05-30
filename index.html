@@ -183,6 +183,11 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 .fcbtn{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;background:rgba(173,216,230,0.55);-webkit-appearance:none;appearance:none;padding:0;font-size:18px;line-height:1}
 .admin-btn{position:fixed;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:rgba(180,180,180,0.25);color:#ccc;border:none;cursor:pointer;font-size:11px;z-index:200;opacity:0.4;transition:opacity .2s;display:flex;align-items:center;justify-content:center}
 .admin-btn:hover{opacity:0.8}
+.wspan.clicked{background:#e8e8e4;border-radius:3px;transition:background .3s}
+.phonetic-popup{position:fixed;background:#1a1a1a;color:white;padding:8px 14px;border-radius:10px;font-size:15px;z-index:500;display:none;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.25);pointer-events:none;min-width:100px}
+.phonetic-popup.show{display:block}
+.ph-phonetic{color:#aee6ff;font-size:14px;margin-top:2px}
+.ph-loading{color:#aaa;font-size:13px}
 </style>
 </head>
 <body>
@@ -304,7 +309,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 <!-- 聽力練習 -->
 <div id="p-listen" class="panel">
   <div class="card">
-    <div class="clabel">🎧 播放時逐字標示｜👆 點擊任何單字聆聽發音</div>
+    <div class="clabel">🎧 播放時逐字標示｜👆 點擊任何單字聆聽發音（使用 IPA 國際音標）</div>
     <div style="font-size:12px;color:#aaa;margin-bottom:8px">※ 逐字標示時間因每個使用者的裝置與語音速度不同，可能略有差異</div>
     <div class="eng" id="listen-body"></div>
   </div>
@@ -428,7 +433,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 </div>
 <script>
 const SHEET_ID = "1zrH98sk6HMrLuZxSumKq0tH9PGWh878xw7PzQUG8v8U";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuRFTN9DOrleh9vxgim0wvIoCYxZMJ2sZyAqfTcRo9nUW6SKtfx9oE_HzCBnb7M7BA/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHvAQS3Z7nO13HZyaVPEpYwjuJHhE2_q58h572LYXQMTbKY5_re_Ud51RhCi2a9it9/exec";
 const CACHE_KEY = "eng_arts_cache";
 const CACHE_TS_KEY = "eng_arts_ts";
 const CACHE_HOURS = 1; /* 快取 1 小時，之後自動重新檢查 */
@@ -887,6 +892,76 @@ document.addEventListener('click',(e)=>{
   if(p) p.classList.remove('show');
 });
 
+/* ── 音標查詢 ── */
+function showPhoneticPopup(word, phonetic, event){
+  const popup=document.getElementById('phonetic-popup');
+  const phWord=document.getElementById('ph-word');
+  const phPh=document.getElementById('ph-phonetic');
+  phWord.textContent=word;
+  phPh.textContent=phonetic||'';
+  phPh.className='ph-phonetic'+(phonetic===null?' ph-loading':'');
+  const x=Math.min(event.clientX-50, window.innerWidth-160);
+  const y=Math.max(event.clientY-70, 10);
+  popup.style.left=x+'px';
+  popup.style.top=y+'px';
+  popup.classList.add('show');
+  clearTimeout(popup._timer);
+  if(phonetic!==null) popup._timer=setTimeout(()=>popup.classList.remove('show'),3000);
+}
+
+async function fetchPhonetic(word, event){
+  /* 先顯示查詢中 */
+  showPhoneticPopup(word, '查詢中…', event);
+  try{
+    const res=await fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'getPhonetic', word})
+    });
+    const json=await res.json();
+    const popup=document.getElementById('phonetic-popup');
+    const phPh=document.getElementById('ph-phonetic');
+    if(json.success&&json.phonetic){
+      phPh.textContent=json.phonetic;
+      phPh.className='ph-phonetic';
+    } else {
+      phPh.textContent='查無音標';
+      phPh.className='ph-phonetic';
+    }
+    clearTimeout(popup._timer);
+    popup._timer=setTimeout(()=>popup.classList.remove('show'),3000);
+  }catch(e){
+    document.getElementById('ph-phonetic').textContent='查詢失敗';
+  }
+}
+
+/* ── 中英對照翻譯查詢（優先順序：括號標注→翻譯快取→Google翻譯） ── */
+async function fetchTranslation(word, vocabMap, event){
+  /* 1. 先查括號標注 */
+  const wl=word.toLowerCase();
+  if(vocabMap&&vocabMap[wl]){
+    showWordPopup(word, vocabMap[wl], event);
+    return;
+  }
+  /* 2. 查翻譯快取＋Google翻譯（透過 Apps Script）*/
+  showWordPopup(word,'查詢中…',event);
+  try{
+    const res=await fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'getTranslation', word})
+    });
+    const json=await res.json();
+    if(json.success&&json.translation) showWordPopup(word,json.translation,event);
+    else showWordPopup(word,'查無結果',event);
+  }catch(e){ showWordPopup(word,'查詢失敗',event); }
+}
+
+document.addEventListener('click',()=>{
+  const p=document.getElementById('phonetic-popup');
+  if(p) p.classList.remove('show');
+  const w=document.getElementById('word-popup');
+  if(w) w.classList.remove('show');
+});
+
 function speakWord(w){ if(w&&w.dataset) w=w.dataset.w; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(w); u.lang='en-US'; u.rate=0.8; u.pitch=CFG.pitch; const v=getVoice(); if(v)u.voice=v; speechSynthesis.speak(u); }
 
 /* ── 浮動播放控制 ── */
@@ -1232,39 +1307,39 @@ function renderVocab(){
   });
   document.getElementById('vocab-body').innerHTML=h;
 }
+function onListenWordClick(el, word, event){
+  event.stopPropagation();
+  speakWord(word);
+  el.classList.add('clicked');
+  setTimeout(()=>el.classList.remove('clicked'), 800);
+  fetchPhonetic(word, event);
+}
+
 function renderListen(){
   const ws=cur().eng.split(' ');
   document.getElementById('listen-body').innerHTML=ws.map((w,i)=>{
     const clean=w.replace(/[^a-zA-Z']/g,'');
-    const onclick=clean?`onclick="event.stopPropagation();speakWord(this.dataset.w)" data-w="${clean.replace(/"/g,'&quot;')}"`:'';
-    return `<span class="wspan" id="lw${i}" ${onclick}>${w} </span>`;
+    if(clean){
+      return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${clean.replace(/'/g,"\'")}',event)">${w} </span>`;
+    }
+    return `<span class="wspan" id="lw${i}">${w} </span>`;
   }).join('');
 }
 function renderTranslate(){
+  const vocabMap={};
+  (cur().vocab||[]).forEach(v=>{ vocabMap[v.en.toLowerCase()]=v.zh; });
+  window._curVocabMap=vocabMap;
   const words=cur().eng.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,
-    (match)=>`<span class="word-clickable" onclick="onTransWordClick(this,'${match.replace(/'/g,"\\'")}',event)">${match}</span>`);
+    (match)=>`<span class="word-clickable" onclick="onTransWordClick(this,'${match.replace(/'/g,"\'")}',event)">${match}</span>`);
   document.getElementById('trans-eng').innerHTML=words;
   document.getElementById('trans-zh').textContent=cur().zh;
 }
 
 async function onTransWordClick(el, word, event){
   event.stopPropagation();
-  /* 先查詞彙表，有的話直接顯示不需要呼叫 API */
-  const vocab=cur().vocab||[];
-  const found=vocab.find(v=>v.en.toLowerCase()===word.toLowerCase());
-  if(found){ showWordPopup(word, found.zh, event); return; }
-  /* 詞彙表沒有 → 呼叫 Google LanguageApp 翻譯 */
-  showWordPopup(word,'查詢中…',event);
-  try{
-    const res=await fetch(APPS_SCRIPT_URL,{
-      method:'POST',
-      body:JSON.stringify({action:'translate', word})
-    });
-    const json=await res.json();
-    if(json.success&&json.translation) showWordPopup(word, json.translation, event);
-    else showWordPopup(word,'查無結果',event);
-  }catch(e){ showWordPopup(word,'查詢失敗',event); }
+  fetchTranslation(word, window._curVocabMap, event);
 }
+
 function renderSentList(){
   const ss=sents(),zz=sentsZh();
   document.getElementById('sent-list').innerHTML=ss.map((s,i)=>`
@@ -1291,11 +1366,10 @@ function renderAll(){
 function switchArt(i){ci=i;renderAll();}
 
 function showVpop(el,en,zh,event){
-  const pop=document.getElementById('vpop');
-  document.getElementById('vpen').textContent=en;document.getElementById('vpzh').textContent=zh;
-  const cr=el.closest('.card').getBoundingClientRect(),er=el.getBoundingClientRect();
-  pop.style.left=(er.left-cr.left)+'px';pop.style.top=(er.bottom-cr.top+4)+'px';
-  pop.classList.add('show');event.stopPropagation();speakWord(en);
+  event.stopPropagation();
+  speakWord(en);
+  /* 顯示音標浮窗 */
+  fetchPhonetic(en, event);
 }
 document.addEventListener('click',()=>document.getElementById('vpop').classList.remove('show'));
 
@@ -1588,12 +1662,16 @@ async function adminSave(){
   const btn=document.getElementById('admin-save-btn');
   btn.textContent='儲存中…'; btn.disabled=true;
   try {
+    /* 先新增文章 */
     const res=await fetch(APPS_SCRIPT_URL,{
       method:'POST',
       body:JSON.stringify({action:'add', pwd:_adminPwd, raw:adminDraft._raw})
     });
     const json=await res.json();
     if(json.success){
+      /* 背景預查所有單字的音標和翻譯 */
+      const words=[...new Set(adminDraft.eng.split(/\s+/).map(w=>w.replace(/[^a-zA-Z']/g,'').toLowerCase()).filter(w=>w.length>1))];
+      fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'prefetch',words})}).catch(()=>{});
       ARTS.unshift(adminDraft);
       ci=0; saveCache(); renderAll();
       document.getElementById('admin-paste').value='';
@@ -1750,6 +1828,12 @@ if(document.readyState==='complete'||document.readyState==='interactive'){
   showFloatCtrl('vocab');
 }
 </script>
+
+<!-- 音標浮窗 -->
+<div class="phonetic-popup" id="phonetic-popup">
+  <div id="ph-word"></div>
+  <div id="ph-phonetic" class="ph-phonetic"></div>
+</div>
 
 <!-- 單字點擊浮窗 -->
 <div class="word-popup" id="word-popup">
