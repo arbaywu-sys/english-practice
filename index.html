@@ -1087,11 +1087,13 @@ async function loadAllTranslations(){
       body:JSON.stringify({action:'getAllTranslations'})
     });
     const json=await res.json();
+    console.log('[翻譯快取] 回傳:', json.success, '筆數:', json.translations?Object.keys(json.translations).length:0);
     if(json.success&&json.translations){
       Object.assign(_transCache, json.translations);
       saveTransCache();
+      console.log('[翻譯快取] 已載入，_transCache 筆數:', Object.keys(_transCache).length);
     }
-  }catch(e){ console.log('載入翻譯快取失敗',e); }
+  }catch(e){ console.log('[翻譯快取] 載入失敗:', e); }
 }
 
 async function loadAllPhonetics(){
@@ -1101,12 +1103,13 @@ async function loadAllPhonetics(){
       body:JSON.stringify({action:'getAllPhonetics'})
     });
     const json=await res.json();
+    console.log('[音標快取] 回傳:', json.success, '筆數:', json.phonetics?Object.keys(json.phonetics).length:0);
     if(json.success&&json.phonetics){
-      /* Sheet 資料覆蓋本地快取（確保最新資料優先） */
       Object.assign(_phonCache, json.phonetics);
       savePhonLS();
+      console.log('[音標快取] 已載入，_phonCache 筆數:', Object.keys(_phonCache).length);
     }
-  }catch(e){ console.log('載入音標快取失敗',e); }
+  }catch(e){ console.log('[音標快取] 載入失敗:', e); }
 }
 
 function buildTransCache(){
