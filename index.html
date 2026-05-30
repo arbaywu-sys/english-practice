@@ -188,6 +188,24 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 .phonetic-popup.show{display:block}
 .ph-phonetic{color:#aee6ff;font-size:14px;margin-top:2px}
 .ph-loading{color:#aaa;font-size:13px}
+/* ── 浮水印 ── */
+.watermark-wrap{position:relative;overflow:hidden}
+.watermark-wrap::before{
+  content:'遠足英文練習';
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) rotate(-30deg);
+  font-size:clamp(18px,5vw,28px);
+  color:rgba(0,0,0,0.04);
+  white-space:nowrap;
+  pointer-events:none;
+  z-index:0;
+  font-weight:700;
+  letter-spacing:4px;
+  user-select:none;
+}
+/* ── 版權聲明 ── */
+.copyright{text-align:center;font-size:12px;color:#bbb;padding:16px 0 8px;letter-spacing:0.5px}
 </style>
 </head>
 <body>
@@ -280,7 +298,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
   </div>
 </div>
 <div id="level-bar" style="display:none"></div>
-<div class="header" id="art-header"></div>
+<div class="watermark-wrap"><div class="header" id="art-header"></div></div>
 
 <div class="tabs">
   <button class="tab on" onclick="sw('vocab',this)">👁 單字學習</button>
@@ -910,6 +928,12 @@ function showPhoneticPopup(word, phonetic, event){
 }
 
 async function fetchPhonetic(word, event){
+  const wl=word.toLowerCase();
+  /* 先查 localStorage */
+  if(_phonCache[wl]){
+    showPhoneticPopup(word, _phonCache[wl], event);
+    return;
+  }
   showPhoneticPopup(word, '查詢中…', event);
   try{
     const res=await fetch(APPS_SCRIPT_URL,{
@@ -920,6 +944,8 @@ async function fetchPhonetic(word, event){
     const popup=document.getElementById('phonetic-popup');
     const phPh=document.getElementById('ph-phonetic');
     if(json.success&&json.phonetic){
+      _phonCache[wl]=json.phonetic;
+      savePhonCache(); /* 存入 localStorage */
       phPh.textContent=json.phonetic;
     } else {
       phPh.textContent='查無音標';
@@ -932,12 +958,21 @@ async function fetchPhonetic(word, event){
   }
 }
 
-/* ── 中英對照翻譯快取（載入文章時預先建立） ── */
+/* ── 中英對照翻譯快取（localStorage 持久化） ── */
 let _transCache={};
+let _phonCache={};
+const LS_TRANS_KEY='eng_trans_cache';
+const LS_PHON_KEY='eng_phon_cache';
+
+/* 載入 localStorage 快取 */
+try{ _transCache=JSON.parse(localStorage.getItem(LS_TRANS_KEY)||'{}'); }catch(e){ _transCache={}; }
+try{ _phonCache=JSON.parse(localStorage.getItem(LS_PHON_KEY)||'{}'); }catch(e){ _phonCache={}; }
+
+function saveTransCache(){ try{ localStorage.setItem(LS_TRANS_KEY, JSON.stringify(_transCache)); }catch(e){} }
+function savePhonCache(){ try{ localStorage.setItem(LS_PHON_KEY, JSON.stringify(_phonCache)); }catch(e){} }
 
 function buildTransCache(){
-  _transCache={};
-  /* 從單字表建立 */
+  /* 從單字表補入（不清空，保留 localStorage 快取）*/
   (cur().vocab||[]).forEach(v=>{ _transCache[v.en.toLowerCase()]=v.zh; });
 }
 
@@ -949,7 +984,7 @@ async function fetchTranslation(word, vocabMap, event){
     showWordPopup(word, vocabMap[wl], event);
     return;
   }
-  /* 2. 查本地快取 */
+  /* 2. 查本地快取（含 localStorage）*/
   if(_transCache[wl]){
     showWordPopup(word, _transCache[wl], event);
     return;
@@ -963,7 +998,8 @@ async function fetchTranslation(word, vocabMap, event){
     });
     const json=await res.json();
     if(json.success&&json.translation){
-      _transCache[wl]=json.translation; /* 存入本地快取 */
+      _transCache[wl]=json.translation;
+      saveTransCache(); /* 存入 localStorage */
       showWordPopup(word,json.translation,event);
     } else {
       showWordPopup(word,'查無結果',event);
@@ -1875,6 +1911,9 @@ if(document.readyState==='complete'||document.readyState==='interactive'){
 /* 浮動按鈕初始化：在 HTML 元素存在後執行 */
 showFloatCtrl('vocab');
 </script>
+
+<!-- 版權聲明 -->
+<div class="copyright">© 2025 遠足客製鞋墊 版權所有</div>
 
 <!-- 管理員入口 -->
 <button class="admin-btn" onclick="openAdmin()" title="管理員登入">⚙</button>
