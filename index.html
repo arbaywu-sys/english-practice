@@ -1780,12 +1780,12 @@ function closeAdmin(){
   document.getElementById('admin-overlay').classList.remove('show');
 }
 
-document.getElementById('admin-overlay').addEventListener('click',function(e){
-  if(e.target===this) closeAdmin();
-});
-
-document.getElementById('admin-pwd').addEventListener('keydown',function(e){
-  if(e.key==='Enter') checkAdminPwd();
+/* admin-overlay 和 admin-pwd 在 HTML 後段，用 DOMContentLoaded 確保找得到 */
+document.addEventListener('DOMContentLoaded', function(){
+  const overlay = document.getElementById('admin-overlay');
+  if(overlay) overlay.addEventListener('click', function(e){ if(e.target===this) closeAdmin(); });
+  const pwd = document.getElementById('admin-pwd');
+  if(pwd) pwd.addEventListener('keydown', function(e){ if(e.key==='Enter') checkAdminPwd(); });
 });
 
 async function checkAdminPwd(){
