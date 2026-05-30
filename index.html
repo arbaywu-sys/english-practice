@@ -923,71 +923,73 @@ function savePhonLS(){
   try{localStorage.setItem(PHON_LS_KEY,JSON.stringify(_phonCache));}catch(e){}
 }
 
+/* 從 Free Dictionary API 取 IPA 音標（只接受 /…/ 格式，過濾掉 ARPAbet） */
 async function fetchPhoneticFromFreeDic(word){
-  /* Free Dictionary API — 直接前端查詢，不繞 Apps Script */
   try{
     const res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
     if(!res.ok) return null;
     const json=await res.json();
     if(!Array.isArray(json)) return null;
-    /* 優先取有值的音標 */
+    const candidates=[];
     for(const entry of json){
-      if(entry.phonetic&&entry.phonetic.trim()) return entry.phonetic.trim();
+      if(entry.phonetic&&entry.phonetic.trim()) candidates.push(entry.phonetic.trim());
       if(entry.phonetics){
         for(const ph of entry.phonetics){
-          if(ph.text&&ph.text.trim()) return ph.text.trim();
+          if(ph.text&&ph.text.trim()) candidates.push(ph.text.trim());
         }
       }
     }
+    /* 只接受真正的 IPA：必須包含 / 且不含純大寫字串（ARPAbet 是大寫） */
+    const ipa=candidates.find(c=>c.includes('/')&&!/\b[A-Z]{2,}\b/.test(c));
+    return ipa||null;
   }catch(e){}
   return null;
 }
 
-async function fetchPhoneticFromDatamuse(word){
-  /* Datamuse API — 備援，回傳 arpabet 轉成近似 IPA */
+/* 回寫音標到 Apps Script（Sheets 快取），背景靜默執行 */
+function savePhoneticToSheet(word, phonetic){
   try{
-    const res=await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(word)}&md=r&max=1`);
-    if(!res.ok) return null;
-    const json=await res.json();
-    if(!json.length||!json[0].tags) return null;
-    const pron=json[0].tags.find(t=>t.startsWith('pron:'));
-    if(pron) return pron.replace('pron:','').trim();
+    fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'savePhonetic', word, phonetic})
+    }).catch(()=>{});
   }catch(e){}
-  return null;
 }
 
 async function fetchPhonetic(word, event){
   const wl=word.toLowerCase();
   /* 1. 先查本地快取（含 localStorage） */
   if(_phonCache[wl]){
-    showPhoneticPopup(word, _phonCache[wl]==='-'?'查無音標':_phonCache[wl], event);
+    const cached=_phonCache[wl];
+    showPhoneticPopup(word, cached==='-'?'查無音標':cached, event);
     return;
   }
   showPhoneticPopup(word, '查詢中…', event);
   const popup=document.getElementById('phonetic-popup');
   const phPh=document.getElementById('ph-phonetic');
 
-  /* 2. 同時查 Apps Script（有 Sheets 快取）和 Free Dictionary API */
   let phonetic=null;
+  let fromSheet=false;
+
+  /* 2. 同時查 Apps Script（Sheets快取）和 Free Dictionary API */
   try{
-    const [asResult, fdResult] = await Promise.allSettled([
-      fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'getPhonetic',word})}).then(r=>r.json()).catch(()=>null),
+    const [asResult, fdResult]=await Promise.allSettled([
+      fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'getPhonetic',word})})
+        .then(r=>r.json()).catch(()=>null),
       fetchPhoneticFromFreeDic(wl)
     ]);
-    /* Apps Script 優先（因有 Sheets 快取） */
+    /* Apps Script 優先（已儲存的 IPA），但過濾掉 ARPAbet（純大寫） */
     if(asResult.status==='fulfilled'&&asResult.value&&asResult.value.success&&asResult.value.phonetic){
-      phonetic=asResult.value.phonetic;
+      const ph=asResult.value.phonetic;
+      if(ph.includes('/')||!/\b[A-Z]{2,}\b/.test(ph)){ phonetic=ph; fromSheet=true; }
     }
     /* Free Dictionary 備援 */
     if(!phonetic&&fdResult.status==='fulfilled'&&fdResult.value){
       phonetic=fdResult.value;
+      /* 新查到的回寫到 Sheets 快取 */
+      savePhoneticToSheet(word, phonetic);
     }
   }catch(e){}
-
-  /* 3. 若還是查無，試 Datamuse */
-  if(!phonetic){
-    phonetic=await fetchPhoneticFromDatamuse(wl);
-  }
 
   if(phonetic){
     _phonCache[wl]=phonetic;
