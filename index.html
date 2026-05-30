@@ -963,11 +963,10 @@ function showPhoneticPopup(word, phonetic, event){
   if(phonetic!==null) popup._timer=setTimeout(()=>popup.classList.remove('show'),3000);
 }
 
-/* ── 音標查詢（多備援：localStorage → Apps Script → Free Dictionary → Datamuse） ── */
+/* ── 音標查詢（多備援：Sheet快取 → Apps Script → Free Dictionary） ── */
 const PHON_LS_KEY = 'eng_phon_cache';
-(function loadPhonLS(){
-  try{const s=localStorage.getItem(PHON_LS_KEY);if(s)Object.assign(_phonCache,JSON.parse(s));}catch(e){}
-})();
+/* 頁面載入時清空舊的音標 localStorage，完全以 Sheet 為主 */
+try{ localStorage.removeItem(PHON_LS_KEY); }catch(e){}
 function savePhonLS(){
   try{localStorage.setItem(PHON_LS_KEY,JSON.stringify(_phonCache));}catch(e){}
 }
@@ -1103,8 +1102,8 @@ async function loadAllPhonetics(){
     });
     const json=await res.json();
     if(json.success&&json.phonetics){
-      /* 合併到 _phonCache（不覆蓋 localStorage 已有的） */
-      Object.assign(_phonCache, json.phonetics, _phonCache);
+      /* Sheet 資料覆蓋本地快取（確保最新資料優先） */
+      Object.assign(_phonCache, json.phonetics);
       savePhonLS();
     }
   }catch(e){ console.log('載入音標快取失敗',e); }
