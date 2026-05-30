@@ -914,42 +914,107 @@ function showPhoneticPopup(word, phonetic, event){
   if(phonetic!==null) popup._timer=setTimeout(()=>popup.classList.remove('show'),3000);
 }
 
+/* ── 音標查詢（多備援：localStorage → Apps Script → Free Dictionary → Datamuse） ── */
+const PHON_LS_KEY = 'eng_phon_cache';
+(function loadPhonLS(){
+  try{const s=localStorage.getItem(PHON_LS_KEY);if(s)Object.assign(_phonCache,JSON.parse(s));}catch(e){}
+})();
+function savePhonLS(){
+  try{localStorage.setItem(PHON_LS_KEY,JSON.stringify(_phonCache));}catch(e){}
+}
+
+async function fetchPhoneticFromFreeDic(word){
+  /* Free Dictionary API — 直接前端查詢，不繞 Apps Script */
+  try{
+    const res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+    if(!res.ok) return null;
+    const json=await res.json();
+    if(!Array.isArray(json)) return null;
+    /* 優先取有值的音標 */
+    for(const entry of json){
+      if(entry.phonetic&&entry.phonetic.trim()) return entry.phonetic.trim();
+      if(entry.phonetics){
+        for(const ph of entry.phonetics){
+          if(ph.text&&ph.text.trim()) return ph.text.trim();
+        }
+      }
+    }
+  }catch(e){}
+  return null;
+}
+
+async function fetchPhoneticFromDatamuse(word){
+  /* Datamuse API — 備援，回傳 arpabet 轉成近似 IPA */
+  try{
+    const res=await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(word)}&md=r&max=1`);
+    if(!res.ok) return null;
+    const json=await res.json();
+    if(!json.length||!json[0].tags) return null;
+    const pron=json[0].tags.find(t=>t.startsWith('pron:'));
+    if(pron) return pron.replace('pron:','').trim();
+  }catch(e){}
+  return null;
+}
+
 async function fetchPhonetic(word, event){
   const wl=word.toLowerCase();
-  /* 先查本地快取 */
+  /* 1. 先查本地快取（含 localStorage） */
   if(_phonCache[wl]){
-    showPhoneticPopup(word, _phonCache[wl]==='-'?null:_phonCache[wl], event);
+    showPhoneticPopup(word, _phonCache[wl]==='-'?'查無音標':_phonCache[wl], event);
     return;
   }
   showPhoneticPopup(word, '查詢中…', event);
+  const popup=document.getElementById('phonetic-popup');
+  const phPh=document.getElementById('ph-phonetic');
+
+  /* 2. 同時查 Apps Script（有 Sheets 快取）和 Free Dictionary API */
+  let phonetic=null;
   try{
-    const res=await fetch(APPS_SCRIPT_URL,{
-      method:'POST',
-      body:JSON.stringify({action:'getPhonetic', word})
-    });
-    const json=await res.json();
-    const popup=document.getElementById('phonetic-popup');
-    const phPh=document.getElementById('ph-phonetic');
-    if(json.success&&json.phonetic){
-      _phonCache[wl]=json.phonetic;
-      phPh.textContent=json.phonetic;
-    } else {
-      _phonCache[wl]='-'; /* 記錄查過但查無結果 */
-      phPh.textContent='查無音標';
+    const [asResult, fdResult] = await Promise.allSettled([
+      fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'getPhonetic',word})}).then(r=>r.json()).catch(()=>null),
+      fetchPhoneticFromFreeDic(wl)
+    ]);
+    /* Apps Script 優先（因有 Sheets 快取） */
+    if(asResult.status==='fulfilled'&&asResult.value&&asResult.value.success&&asResult.value.phonetic){
+      phonetic=asResult.value.phonetic;
     }
-    phPh.className='ph-phonetic';
-    clearTimeout(popup._timer);
-    popup._timer=setTimeout(()=>popup.classList.remove('show'),3000);
-  }catch(e){
-    document.getElementById('ph-phonetic').textContent='查詢失敗';
+    /* Free Dictionary 備援 */
+    if(!phonetic&&fdResult.status==='fulfilled'&&fdResult.value){
+      phonetic=fdResult.value;
+    }
+  }catch(e){}
+
+  /* 3. 若還是查無，試 Datamuse */
+  if(!phonetic){
+    phonetic=await fetchPhoneticFromDatamuse(wl);
   }
+
+  if(phonetic){
+    _phonCache[wl]=phonetic;
+    savePhonLS();
+    phPh.textContent=phonetic;
+  } else {
+    _phonCache[wl]='-';
+    savePhonLS();
+    phPh.textContent='查無音標';
+  }
+  phPh.className='ph-phonetic';
+  clearTimeout(popup._timer);
+  popup._timer=setTimeout(()=>popup.classList.remove('show'),3000);
 }
 
 /* ── 翻譯快取（頁面載入時從 Sheets 一次抓取） ── */
 let _transCache={};
 let _phonCache={};
 
-function saveTransCache(){}
+/* ── 翻譯快取 localStorage 持久化 ── */
+const TRANS_LS_KEY='eng_trans_cache';
+(function loadTransLS(){
+  try{const s=localStorage.getItem(TRANS_LS_KEY);if(s)Object.assign(_transCache,JSON.parse(s));}catch(e){}
+})();
+function saveTransCache(){
+  try{localStorage.setItem(TRANS_LS_KEY,JSON.stringify(_transCache));}catch(e){}
+}
 function savePhonCache(){}
 
 async function loadAllCaches(){
@@ -960,13 +1025,25 @@ async function loadAllCaches(){
     });
     const json=await res.json();
     if(json.success&&json.translations){
-      _transCache=json.translations;
+      /* 合併（不覆蓋已有值，讓 localStorage 舊快取繼續有效） */
+      Object.assign(_transCache, json.translations, _transCache);
+      /* 再次把新拿到的翻譯存入 _transCache 並持久化 */
+      Object.assign(_transCache, json.translations);
+      saveTransCache();
     }
   }catch(e){ console.log('載入翻譯快取失敗',e); }
 }
 
 function buildTransCache(){
-  (cur().vocab||[]).forEach(v=>{ _transCache[v.en.toLowerCase()]=v.zh; });
+  /* 把所有文章的 vocab 都填入快取（不只當前文章），並持久化 */
+  let changed=false;
+  (ARTS||[]).forEach(art=>{
+    (art.vocab||[]).forEach(v=>{
+      const k=v.en.toLowerCase();
+      if(!_transCache[k]){ _transCache[k]=v.zh; changed=true; }
+    });
+  });
+  if(changed) saveTransCache();
 }
 
 /* ── 中英對照翻譯查詢（優先順序：括號標注→本地快取→Apps Script快取→Google翻譯） ── */
@@ -992,6 +1069,7 @@ async function fetchTranslation(word, vocabMap, event){
     const json=await res.json();
     if(json.success&&json.translation){
       _transCache[wl]=json.translation;
+      saveTransCache(); /* 立即存入 localStorage */
       showWordPopup(word,json.translation,event);
     } else {
       showWordPopup(word,'查無結果',event);
