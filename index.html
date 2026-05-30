@@ -284,7 +284,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
   </div>
 </div>
 <div id="level-bar" style="display:none"></div>
-<div class="brand-bar">📚 遠足英文練習 | arbaywu-sys.github.io/english-practice</div>
+
 <div class="header" id="art-header"></div>
 
 <div class="tabs">
@@ -316,6 +316,58 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
   <div class="card">
     <div class="clabel">🎧 播放時逐字標示｜👆 點擊任何單字聆聽發音（使用 IPA 國際音標）</div>
     <div style="font-size:12px;color:#aaa;margin-bottom:8px">※ 逐字標示時間因每個使用者的裝置與語音速度不同，可能略有差異</div>
+    <!-- 音標說明折疊 -->
+    <div style="margin-bottom:10px">
+      <button onclick="toggleIPA()" style="background:none;border:none;cursor:pointer;font-size:13px;color:#185FA5;font-family:inherit;padding:0;display:flex;align-items:center;gap:4px" id="ipa-toggle-btn">
+        音標說明 <span id="ipa-arrow">▼</span>
+      </button>
+      <div id="ipa-explain" style="display:none;margin-top:10px;font-size:13px;color:#444;line-height:1.9;background:#f8f8f5;border-radius:10px;padding:12px 14px">
+
+        <div style="font-weight:600;margin-bottom:6px;color:#1a1a1a">🔤 標記符號</div>
+        <div style="display:grid;grid-template-columns:60px 1fr;gap:2px 10px;margin-bottom:12px">
+          <span style="font-family:monospace;color:#185FA5">ˈ</span><span>主重音（後面那個音節最重）</span>
+          <span style="font-family:monospace;color:#185FA5">ˌ</span><span>次重音（較弱的重音）</span>
+          <span style="font-family:monospace;color:#185FA5">ː</span><span>長音（母音拉長，例如 uː 長「嗚」）</span>
+          <span style="font-family:monospace;color:#185FA5">/…/</span><span>IPA 音標的標準寫法</span>
+        </div>
+
+        <div style="font-weight:600;margin-bottom:6px;color:#1a1a1a">🗣 母音</div>
+        <div style="display:grid;grid-template-columns:50px 80px 1fr;gap:2px 10px;margin-bottom:12px">
+          <span style="font-family:monospace;color:#185FA5">iː</span><span>長「衣」</span><span style="color:#888">see, feet</span>
+          <span style="font-family:monospace;color:#185FA5">ɪ</span><span>短「衣」</span><span style="color:#888">sit, big</span>
+          <span style="font-family:monospace;color:#185FA5">uː</span><span>長「嗚」</span><span style="color:#888">food, blue</span>
+          <span style="font-family:monospace;color:#185FA5">ʊ</span><span>短「嗚」</span><span style="color:#888">book, put</span>
+          <span style="font-family:monospace;color:#185FA5">e</span><span>短「欸」</span><span style="color:#888">bed, red</span>
+          <span style="font-family:monospace;color:#185FA5">æ</span><span>扁嘴「啊」</span><span style="color:#888">cat, man</span>
+          <span style="font-family:monospace;color:#185FA5">ɑː</span><span>長「啊」</span><span style="color:#888">car, far</span>
+          <span style="font-family:monospace;color:#185FA5">ɒ</span><span>短圓「喔」</span><span style="color:#888">hot, dog</span>
+          <span style="font-family:monospace;color:#185FA5">ɔː</span><span>長「喔」</span><span style="color:#888">law, more</span>
+          <span style="font-family:monospace;color:#185FA5">ʌ</span><span>短「啊」</span><span style="color:#888">cup, love</span>
+          <span style="font-family:monospace;color:#185FA5">ɜː</span><span>長「呃」</span><span style="color:#888">bird, her</span>
+          <span style="font-family:monospace;color:#185FA5">ə</span><span>輕「呃」</span><span style="color:#888">about, teacher</span>
+          <span style="font-family:monospace;color:#185FA5">eɪ</span><span>「欸」滑音</span><span style="color:#888">day, face</span>
+          <span style="font-family:monospace;color:#185FA5">aɪ</span><span>「啊衣」滑音</span><span style="color:#888">my, like</span>
+          <span style="font-family:monospace;color:#185FA5">ɔɪ</span><span>「喔衣」滑音</span><span style="color:#888">boy, join</span>
+          <span style="font-family:monospace;color:#185FA5">aʊ</span><span>「啊嗚」滑音</span><span style="color:#888">now, out</span>
+          <span style="font-family:monospace;color:#185FA5">əʊ</span><span>「呃嗚」滑音</span><span style="color:#888">go, home</span>
+          <span style="font-family:monospace;color:#185FA5">ɪə</span><span>「衣呃」滑音</span><span style="color:#888">ear, here</span>
+        </div>
+
+        <div style="font-weight:600;margin-bottom:6px;color:#1a1a1a">🔊 輔音（特殊符號）</div>
+        <div style="display:grid;grid-template-columns:50px 120px 1fr;gap:2px 10px">
+          <span style="font-family:monospace;color:#185FA5">ɹ</span><span>英文的 r（顛倒 r）</span><span style="color:#888">red, run</span>
+          <span style="font-family:monospace;color:#185FA5">θ</span><span>咬舌 th</span><span style="color:#888">think, bath</span>
+          <span style="font-family:monospace;color:#185FA5">ð</span><span>濁咬舌 th</span><span style="color:#888">the, this</span>
+          <span style="font-family:monospace;color:#185FA5">ʃ</span><span>sh 音</span><span style="color:#888">she, fish</span>
+          <span style="font-family:monospace;color:#185FA5">ʒ</span><span>濁 sh</span><span style="color:#888">vision</span>
+          <span style="font-family:monospace;color:#185FA5">tʃ</span><span>ch 音</span><span style="color:#888">chair, watch</span>
+          <span style="font-family:monospace;color:#185FA5">dʒ</span><span>j 音</span><span style="color:#888">jump, age</span>
+          <span style="font-family:monospace;color:#185FA5">ŋ</span><span>ng 尾音</span><span style="color:#888">sing, long</span>
+          <span style="font-family:monospace;color:#185FA5">j</span><span>y 音</span><span style="color:#888">yes, you</span>
+        </div>
+
+      </div>
+    </div>
     <div class="eng" id="listen-body"></div>
   </div>
   <div class="card" style="display:none">
@@ -438,7 +490,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 </div>
 <script>
 const SHEET_ID = "1zrH98sk6HMrLuZxSumKq0tH9PGWh878xw7PzQUG8v8U";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8J5T3fJyVdYye5CjQhwsZbS7s6DgCv_2qQjKCSi3cKoaGT5Sc1CxcJVOkxfGsxFuv/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzyKYrGJWET83NGow_8wObfI-dvpwB9LMOwdAyFaSOpev6QJttRBxKs2j5BvJPDSlZ/exec";
 const CACHE_KEY = "eng_arts_cache";
 const CACHE_TS_KEY = "eng_arts_ts";
 const CACHE_HOURS = 1; /* 快取 1 小時，之後自動重新檢查 */
@@ -925,27 +977,31 @@ function savePhonLS(){
 
 /* 從 Free Dictionary API 取 IPA 音標（優先有音訊的，過濾 ARPAbet 和罕見字元） */
 async function fetchPhoneticFromFreeDic(word){
-  try{
-    const res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-    if(!res.ok) return null;
-    const json=await res.json();
-    if(!Array.isArray(json)) return null;
-    const withAudio=[], withoutAudio=[];
-    for(const entry of json){
-      if(entry.phonetic&&entry.phonetic.trim()) withoutAudio.push(entry.phonetic.trim());
-      if(entry.phonetics){
-        for(const ph of entry.phonetics){
-          if(!ph.text||!ph.text.trim()) continue;
-          if(ph.audio&&ph.audio.trim()) withAudio.push(ph.text.trim());
-          else withoutAudio.push(ph.text.trim());
+  const isValidIPA=c=>c.includes('/')&&!/[A-Z]{2,}/.test(c)&&!/[ɯʉʘǀǁǂ]/.test(c);
+  /* 查不到時嘗試去掉字尾 s（tourists→tourist, Scientists→scientist）*/
+  const targets=[word];
+  if(word.endsWith('s')&&word.length>3) targets.push(word.slice(0,-1));
+  for(const target of targets){
+    try{
+      const res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(target)}`);
+      if(!res.ok) continue;
+      const json=await res.json();
+      if(!Array.isArray(json)) continue;
+      const withAudio=[], withoutAudio=[];
+      for(const entry of json){
+        if(entry.phonetic&&entry.phonetic.trim()) withoutAudio.push(entry.phonetic.trim());
+        if(entry.phonetics){
+          for(const ph of entry.phonetics){
+            if(!ph.text||!ph.text.trim()) continue;
+            if(ph.audio&&ph.audio.trim()) withAudio.push(ph.text.trim());
+            else withoutAudio.push(ph.text.trim());
+          }
         }
       }
-    }
-    /* 過濾：必須有 /，無連續大寫（ARPAbet），無罕見字元（ɯ等） */
-    const isValidIPA=c=>c.includes('/')&&!/[A-Z]{2,}/.test(c)&&!/[ɯʘǀǁǂ]/.test(c);
-    /* 優先有音訊的 → 再取無音訊的 */
-    return withAudio.find(isValidIPA)||withoutAudio.find(isValidIPA)||null;
-  }catch(e){}
+      const ipa=withAudio.find(isValidIPA)||withoutAudio.find(isValidIPA);
+      if(ipa) return ipa;
+    }catch(e){}
+  }
   return null;
 }
 
@@ -1023,6 +1079,11 @@ function saveTransCache(){
 function savePhonCache(){}
 
 async function loadAllCaches(){
+  /* 同時載入翻譯快取和音標快取 */
+  await Promise.allSettled([loadAllTranslations(), loadAllPhonetics()]);
+}
+
+async function loadAllTranslations(){
   try{
     const res=await fetch(APPS_SCRIPT_URL,{
       method:'POST',
@@ -1030,13 +1091,25 @@ async function loadAllCaches(){
     });
     const json=await res.json();
     if(json.success&&json.translations){
-      /* 合併（不覆蓋已有值，讓 localStorage 舊快取繼續有效） */
-      Object.assign(_transCache, json.translations, _transCache);
-      /* 再次把新拿到的翻譯存入 _transCache 並持久化 */
       Object.assign(_transCache, json.translations);
       saveTransCache();
     }
   }catch(e){ console.log('載入翻譯快取失敗',e); }
+}
+
+async function loadAllPhonetics(){
+  try{
+    const res=await fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'getAllPhonetics'})
+    });
+    const json=await res.json();
+    if(json.success&&json.phonetics){
+      /* 合併到 _phonCache（不覆蓋 localStorage 已有的） */
+      Object.assign(_phonCache, json.phonetics, _phonCache);
+      savePhonLS();
+    }
+  }catch(e){ console.log('載入音標快取失敗',e); }
 }
 
 function buildTransCache(){
@@ -1225,6 +1298,14 @@ function longestCommon(a,b){
 }
 
 /* ── 跟讀評分 ── */
+function toggleIPA(){
+  const el=document.getElementById('ipa-explain');
+  const arrow=document.getElementById('ipa-arrow');
+  const open=el.style.display==='none';
+  el.style.display=open?'block':'none';
+  arrow.textContent=open?'▲':'▼';
+}
+
 function toggleScoreInfo(){
   const el=document.getElementById('score-info');
   const arrow=document.getElementById('score-arrow');
