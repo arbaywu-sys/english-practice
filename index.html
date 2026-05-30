@@ -487,7 +487,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 </div>
 <script>
 const SHEET_ID = "1zrH98sk6HMrLuZxSumKq0tH9PGWh878xw7PzQUG8v8U";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCEUrlH2tbL4iK8KKX2ju9vJj8h_jBMg_P40GMn94BFI-A3DtFXCs12-mG6_sIOJql/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8lkTPSPSsSG68enKVJKfl1KG1KmjS-QIAGnTXnAwL1SyCkVD5csEC3YX6MS1ry5qX/exec";
 const CACHE_KEY = "eng_arts_cache";
 const CACHE_TS_KEY = "eng_arts_ts";
 const CACHE_HOURS = 1; /* 快取 1 小時，之後自動重新檢查 */
@@ -976,8 +976,9 @@ async function fetchPhoneticFromFreeDic(word){
   const isValidIPA=c=>c.includes('/')&&!/[A-Z]{2,}/.test(c)&&!/[ɯʉʘǀǁǂ]/.test(c)&&!c.includes('-');
   /* 查不到時嘗試去掉字尾 s（tourists→tourist, Scientists→scientist）*/
   const targets=[word];
-  if(word.endsWith('es')&&word.length>4) targets.push(word.slice(0,-2)); /* volcanoes→volcano */
-  if(word.endsWith('s')&&word.length>3)  targets.push(word.slice(0,-1)); /* tourists→tourist */
+  if(word.endsWith('ies')&&word.length>4) targets.push(word.slice(0,-3)+'y'); /* bodies→body */
+  if(word.endsWith('es')&&word.length>4)  targets.push(word.slice(0,-2)); /* volcanoes→volcano */
+  if(word.endsWith('s')&&word.length>3)   targets.push(word.slice(0,-1)); /* tourists→tourist */
   for(const target of targets){
     try{
       const res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(target)}`);
@@ -1000,31 +1001,6 @@ async function fetchPhoneticFromFreeDic(word){
     }catch(e){}
   }
   return null;
-}
-
-/* 從 Wiktionary API 取 IPA 音標（第三層備援） */
-async function fetchPhoneticFromWiktionary(word){
-  try{
-    const res=await fetch(`https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(word)}`);
-    if(!res.ok) return null;
-    const json=await res.json();
-    /* Wiktionary 回傳格式：json.en[0].definitions 裡有 pronunciations */
-    const entries=json.en||[];
-    for(const entry of entries){
-      const defs=entry.definitions||[];
-      for(const def of defs){
-        /* 在 definition 文字裡找 IPA 格式 */
-        const match=(def.definition||'').match(/\/[^/]+\//);
-        if(match&&isValidIPAStr(match[0])) return match[0];
-      }
-    }
-  }catch(e){}
-  return null;
-}
-
-/* 獨立的 IPA 有效性檢查（供 Wiktionary 用） */
-function isValidIPAStr(c){
-  return c.includes('/')&&!/[A-Z]{2,}/.test(c)&&!/[ɯʉʘǀǁǂ]/.test(c)&&!c.includes('-');
 }
 
 /* 回寫音標到 Apps Script（Sheets 快取），背景靜默執行 */
@@ -1070,11 +1046,7 @@ async function fetchPhonetic(word, event){
       savePhoneticToSheet(word, phonetic);
     }
   }catch(e){}
-  /* 3. Wiktionary 第三層備援 */
-  if(!phonetic){
-    const wiktResult=await fetchPhoneticFromWiktionary(wl);
-    if(wiktResult){ phonetic=wiktResult; savePhoneticToSheet(word, phonetic); }
-  }
+
 
   if(phonetic){
     _phonCache[wl]=phonetic;
