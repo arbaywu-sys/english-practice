@@ -897,7 +897,7 @@ function showPhoneticPopup(word, phonetic, event){
   const popup=document.getElementById('phonetic-popup');
   const phWord=document.getElementById('ph-word');
   const phPh=document.getElementById('ph-phonetic');
-  phWord.textContent=word;
+  phWord.textContent=''; /* 不顯示英文字 */
   phPh.textContent=phonetic||'';
   phPh.className='ph-phonetic'+(phonetic===null?' ph-loading':'');
   const x=Math.min(event.clientX-50, window.innerWidth-160);
@@ -910,7 +910,6 @@ function showPhoneticPopup(word, phonetic, event){
 }
 
 async function fetchPhonetic(word, event){
-  /* 先顯示查詢中 */
   showPhoneticPopup(word, '查詢中…', event);
   try{
     const res=await fetch(APPS_SCRIPT_URL,{
@@ -922,11 +921,10 @@ async function fetchPhonetic(word, event){
     const phPh=document.getElementById('ph-phonetic');
     if(json.success&&json.phonetic){
       phPh.textContent=json.phonetic;
-      phPh.className='ph-phonetic';
     } else {
       phPh.textContent='查無音標';
-      phPh.className='ph-phonetic';
     }
+    phPh.className='ph-phonetic';
     clearTimeout(popup._timer);
     popup._timer=setTimeout(()=>popup.classList.remove('show'),3000);
   }catch(e){
@@ -934,15 +932,29 @@ async function fetchPhonetic(word, event){
   }
 }
 
-/* ── 中英對照翻譯查詢（優先順序：括號標注→翻譯快取→Google翻譯） ── */
+/* ── 中英對照翻譯快取（載入文章時預先建立） ── */
+let _transCache={};
+
+function buildTransCache(){
+  _transCache={};
+  /* 從單字表建立 */
+  (cur().vocab||[]).forEach(v=>{ _transCache[v.en.toLowerCase()]=v.zh; });
+}
+
+/* ── 中英對照翻譯查詢（優先順序：括號標注→本地快取→Apps Script快取→Google翻譯） ── */
 async function fetchTranslation(word, vocabMap, event){
-  /* 1. 先查括號標注 */
   const wl=word.toLowerCase();
+  /* 1. 先查括號標注 */
   if(vocabMap&&vocabMap[wl]){
     showWordPopup(word, vocabMap[wl], event);
     return;
   }
-  /* 2. 查翻譯快取＋Google翻譯（透過 Apps Script）*/
+  /* 2. 查本地快取 */
+  if(_transCache[wl]){
+    showWordPopup(word, _transCache[wl], event);
+    return;
+  }
+  /* 3. 查 Apps Script（Sheets快取→Google翻譯）*/
   showWordPopup(word,'查詢中…',event);
   try{
     const res=await fetch(APPS_SCRIPT_URL,{
@@ -950,8 +962,12 @@ async function fetchTranslation(word, vocabMap, event){
       body:JSON.stringify({action:'getTranslation', word})
     });
     const json=await res.json();
-    if(json.success&&json.translation) showWordPopup(word,json.translation,event);
-    else showWordPopup(word,'查無結果',event);
+    if(json.success&&json.translation){
+      _transCache[wl]=json.translation; /* 存入本地快取 */
+      showWordPopup(word,json.translation,event);
+    } else {
+      showWordPopup(word,'查無結果',event);
+    }
   }catch(e){ showWordPopup(word,'查詢失敗',event); }
 }
 
@@ -1329,6 +1345,7 @@ function renderTranslate(){
   const vocabMap={};
   (cur().vocab||[]).forEach(v=>{ vocabMap[v.en.toLowerCase()]=v.zh; });
   window._curVocabMap=vocabMap;
+  buildTransCache();
   const words=cur().eng.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,
     (match)=>`<span class="word-clickable" onclick="onTransWordClick(this,'${match.replace(/'/g,"\'")}',event)">${match}</span>`);
   document.getElementById('trans-eng').innerHTML=words;
