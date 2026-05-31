@@ -6,7 +6,7 @@
 <title>每日英文練習</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh;padding:1rem}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh;padding:0.5rem}
 .app{max-width:720px;margin:0 auto}
 .intro-box{background:white;border-radius:14px;border:0.5px solid #e0e0d8;padding:1.1rem 1.4rem;margin-bottom:1rem;text-align:center}
 .intro-title{font-size:18px;font-weight:700;margin-bottom:6px}
@@ -117,44 +117,128 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .word-popup-zh{color:#FFE066;font-size:15px;font-weight:700;letter-spacing:0.5px}
 .word-popup-loading{color:#90CAF9;font-size:14px;font-weight:500}
 
-/* ── 流體式字體（dvmin = 螢幕寬高較小值，直向橫向都正確縮放） ── */
-body { font-size: clamp(15px, 4dvmin, 17px); }
-.intro-title { font-size: clamp(20px, 5.5dvmin, 26px); }
-.intro-sub { font-size: clamp(15px, 4dvmin, 18px); }
-.intro-lock { font-size: clamp(13px, 3.5dvmin, 16px); }
-.htitle { font-size: clamp(20px, 5.5dvmin, 26px); }
-.eng { font-size: clamp(17px, 5dvmin, 22px); line-height: 2.3; }
-.vchip { font-size: clamp(14px, 4dvmin, 18px); padding: clamp(2px,0.4dvmin,3px) clamp(7px,1.8dvmin,10px); }
-.mchip { font-size: clamp(13px, 3.8dvmin, 17px); padding: clamp(2px,0.4dvmin,3px) clamp(7px,1.8dvmin,10px); }
-.zh { font-size: clamp(15px, 4dvmin, 19px); line-height: 2.3; }
-.tab { font-size: clamp(13px, 3.8dvmin, 17px); padding: clamp(8px,2dvmin,11px) clamp(14px,3.5dvmin,18px); }
-.btn { font-size: clamp(13px, 3.8dvmin, 17px); padding: clamp(8px,2dvmin,11px) clamp(14px,3.5dvmin,18px); }
-.dpill { font-size: clamp(12px, 3.4dvmin, 16px); padding: clamp(5px,1.3dvmin,8px) clamp(11px,2.8dvmin,15px); }
-.clabel { font-size: clamp(12px, 3.2dvmin, 15px); }
-.badge { font-size: clamp(12px, 3.2dvmin, 15px); }
-.qq { font-size: clamp(14px, 4dvmin, 18px); }
-.qo { font-size: clamp(13px, 3.8dvmin, 17px); padding: clamp(8px,2dvmin,11px) clamp(11px,2.8dvmin,15px); }
-.se { font-size: clamp(14px, 4dvmin, 18px); }
-.sz { font-size: clamp(12px, 3.4dvmin, 16px); }
-.sn { font-size: clamp(11px, 3.2dvmin, 15px); }
-.pbox { font-size: clamp(15px, 4.3dvmin, 19px); }
-.st { font-size: clamp(12px, 3.4dvmin, 16px); }
-.score-num { font-size: clamp(32px, 8dvmin, 48px); }
-.score-msg { font-size: clamp(14px, 4dvmin, 18px); }
-.score-words { font-size: clamp(15px, 4.3dvmin, 19px); line-height: 2.4; }
-.info-box { font-size: clamp(12px, 3.4dvmin, 16px); }
-.filter-btn { font-size: clamp(12px, 3.5dvmin, 16px); padding: clamp(6px,1.8dvmin,9px) clamp(12px,3dvmin,17px); }
-#filter-bar::-webkit-scrollbar { display: none; }
-.star-filter span { font-size: clamp(22px, 5.5dvmin, 28px); }
-.settings-label { font-size: clamp(12px, 3.2dvmin, 15px); }
-.srow label { font-size: clamp(13px, 3.5dvmin, 17px); }
-.sval { font-size: clamp(13px, 3.5dvmin, 17px); }
+/* ══════════════════════════════════════════
+   響應式斷點（固定 px，不用 vw）
+   手機直向  < 600px
+   手機橫向 / 小平板  600–767px
+   平板直向  768–1023px
+   平板橫向 / 桌機  ≥ 1024px
+══════════════════════════════════════════ */
 
-/* 小螢幕額外調整（< 400px，例如 iPhone SE、小 Android） */
-@media (max-width: 400px) {
-  .app { padding: 0.5rem; }
-  .tabs { gap: 4px; }
-  .tab { padding: 8px 10px; }
+/* ── 手機直向（預設） ── */
+body { font-size: 15px; }
+.intro-title { font-size: 18px; }
+.intro-sub { font-size: 14px; }
+.intro-lock { font-size: 12px; }
+.htitle { font-size: 17px; }
+.eng { font-size: 17px; line-height: 2.1; }
+.vchip { font-size: 15px; padding: 2px 7px; }
+.mchip { font-size: 15px; padding: 2px 7px; }
+.zh { font-size: 15px; line-height: 2.1; }
+.tab { font-size: 13px; padding: 8px 13px; }
+.btn { font-size: 13px; padding: 8px 13px; }
+.dpill { font-size: 12px; padding: 5px 11px; }
+.clabel { font-size: 12px; }
+.badge { font-size: 11px; }
+.qq { font-size: 15px; }
+.qo { font-size: 14px; padding: 8px 11px; }
+.se { font-size: 15px; }
+.sz { font-size: 12px; }
+.sn { font-size: 11px; }
+.pbox { font-size: 15px; }
+.st { font-size: 12px; }
+.score-num { font-size: 36px; }
+.score-msg { font-size: 14px; }
+.score-words { font-size: 15px; line-height: 2.2; }
+.info-box { font-size: 12px; }
+.filter-btn { font-size: 13px; padding: 6px 13px; }
+.star-filter span { font-size: 22px; }
+.settings-label { font-size: 11px; }
+.srow label { font-size: 13px; }
+.sval { font-size: 13px; }
+#filter-bar::-webkit-scrollbar { display: none; }
+
+/* ── 手機橫向 / 小平板（600–767px） ── */
+@media (min-width: 600px) and (max-width: 767px) {
+  body { font-size: 15px; }
+  .htitle { font-size: 18px; }
+  .eng { font-size: 17px; line-height: 2.1; }
+  .zh { font-size: 15px; }
+  .tab { font-size: 13px; padding: 8px 14px; }
+  .btn { font-size: 13px; }
+  .dpill { font-size: 13px; }
+  .filter-btn { font-size: 13px; }
+}
+
+/* ── 平板直向（768–1023px） ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  body { font-size: 16px; }
+  .intro-title { font-size: 20px; }
+  .htitle { font-size: 20px; }
+  .eng { font-size: 19px; line-height: 2.2; }
+  .vchip { font-size: 17px; padding: 2px 8px; }
+  .mchip { font-size: 17px; padding: 2px 8px; }
+  .zh { font-size: 17px; line-height: 2.2; }
+  .tab { font-size: 15px; padding: 9px 16px; }
+  .btn { font-size: 15px; padding: 9px 16px; }
+  .dpill { font-size: 14px; padding: 6px 13px; }
+  .clabel { font-size: 13px; }
+  .badge { font-size: 13px; }
+  .qq { font-size: 16px; }
+  .qo { font-size: 15px; padding: 9px 13px; }
+  .se { font-size: 16px; }
+  .sz { font-size: 13px; }
+  .sn { font-size: 12px; }
+  .pbox { font-size: 17px; }
+  .st { font-size: 13px; }
+  .score-num { font-size: 42px; }
+  .score-msg { font-size: 16px; }
+  .score-words { font-size: 17px; }
+  .info-box { font-size: 13px; }
+  .filter-btn { font-size: 14px; padding: 7px 15px; }
+  .star-filter span { font-size: 24px; }
+  .settings-label { font-size: 12px; }
+  .srow label { font-size: 15px; }
+  .sval { font-size: 15px; }
+}
+
+/* ── 平板橫向 / 桌機（≥ 1024px） ── */
+@media (min-width: 1024px) {
+  body { font-size: 16px; }
+  .intro-title { font-size: 22px; }
+  .htitle { font-size: 22px; }
+  .eng { font-size: 20px; line-height: 2.2; }
+  .vchip { font-size: 17px; padding: 2px 9px; }
+  .mchip { font-size: 17px; padding: 2px 9px; }
+  .zh { font-size: 17px; line-height: 2.2; }
+  .tab { font-size: 15px; padding: 9px 17px; }
+  .btn { font-size: 15px; padding: 9px 17px; }
+  .dpill { font-size: 14px; padding: 6px 14px; }
+  .clabel { font-size: 13px; }
+  .badge { font-size: 13px; }
+  .qq { font-size: 17px; }
+  .qo { font-size: 15px; padding: 9px 14px; }
+  .se { font-size: 16px; }
+  .sz { font-size: 13px; }
+  .sn { font-size: 12px; }
+  .pbox { font-size: 17px; }
+  .st { font-size: 13px; }
+  .score-num { font-size: 48px; }
+  .score-msg { font-size: 16px; }
+  .score-words { font-size: 18px; }
+  .info-box { font-size: 13px; }
+  .filter-btn { font-size: 14px; padding: 7px 16px; }
+  .star-filter span { font-size: 26px; }
+  .settings-label { font-size: 13px; }
+  .srow label { font-size: 15px; }
+  .sval { font-size: 15px; }
+}
+
+/* ── 小螢幕（< 400px，iPhone SE 等） ── */
+@media (max-width: 399px) {
+  .eng { font-size: 16px; }
+  .tab { font-size: 12px; padding: 7px 10px; }
+  .btn { font-size: 12px; padding: 7px 10px; }
   .brow { gap: 6px; }
 }
 
