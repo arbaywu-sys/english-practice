@@ -124,7 +124,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 .intro-sub { font-size: clamp(17px, 4.5vw, 18px); }
 .intro-lock { font-size: clamp(15px, 3.8vw, 16px); }
 .htitle { font-size: clamp(22px, 6vw, 26px); }
-.eng { font-size: clamp(18px, 5vw, 20px); line-height: 2.3; }
+.eng { font-size: clamp(19px, 5.5vw, 22px); line-height: 2.3; }
 .vchip { font-size: clamp(16px, 4.5vw, 18px); padding: clamp(2px,0.5vw,3px) clamp(8px,2vw,10px); }
 .mchip { font-size: clamp(15px, 4.2vw, 17px); padding: clamp(2px,0.5vw,3px) clamp(8px,2vw,10px); }
 .zh { font-size: clamp(17px, 4.5vw, 19px); line-height: 2.3; }
@@ -145,6 +145,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 .score-words { font-size: clamp(17px, 4.8vw, 19px); line-height: 2.4; }
 .info-box { font-size: clamp(14px, 3.8vw, 16px); }
 .filter-btn { font-size: clamp(14px, 4vw, 16px); padding: clamp(7px,2vw,9px) clamp(14px,3.5vw,17px); }
+#filter-bar::-webkit-scrollbar { display: none; }
 .star-filter span { font-size: clamp(24px, 6vw, 28px); }
 .settings-label { font-size: clamp(13px, 3.5vw, 15px); }
 .srow label { font-size: clamp(15px, 4vw, 17px); }
@@ -272,16 +273,20 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
   </div>
 </div>
 
-<!-- 主題 + 難易度 同一排 -->
-<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:1rem">
-  <div id="filter-bar" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
-  <div id="star-filter-wrap" style="display:none;align-items:center;gap:4px">
-    <span style="font-size:12px;color:#888">難易度</span>
-    <div class="star-filter" id="star-filter">
-      <span data-v="1">⭐</span><span data-v="2">⭐</span><span data-v="3">⭐</span><span data-v="4">⭐</span><span data-v="5">⭐</span><span data-v="6">⭐</span>
-    </div>
-    <button id="star-reset" onclick="setLevel(0)" style="display:none;font-size:11px;color:#888;cursor:pointer;padding:2px 8px;border:0.5px solid #ddd;border-radius:8px;background:white;font-family:inherit;margin-left:4px">✕ 全部</button>
+<!-- 主題 + 難易度 -->
+<div style="border-top:0.5px solid #e0e0d8;margin-bottom:10px"></div>
+<!-- 主題標籤：單行左右滑動 -->
+<div style="position:relative;margin-bottom:8px">
+  <div id="filter-bar" style="display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:2px;white-space:nowrap"></div>
+  <div id="filter-fade" style="position:absolute;right:0;top:0;bottom:2px;width:40px;background:linear-gradient(to right,transparent,#f0f0ea);pointer-events:none;transition:opacity .2s"></div>
+</div>
+<!-- 難易度 -->
+<div id="star-filter-wrap" style="display:none;align-items:center;gap:4px;margin-bottom:10px">
+  <span style="font-size:12px;color:#888">難易度</span>
+  <div class="star-filter" id="star-filter">
+    <span data-v="1">⭐</span><span data-v="2">⭐</span><span data-v="3">⭐</span><span data-v="4">⭐</span><span data-v="5">⭐</span><span data-v="6">⭐</span>
   </div>
+  <button id="star-reset" onclick="setLevel(0)" style="display:none;font-size:11px;color:#888;cursor:pointer;padding:2px 8px;border:0.5px solid #ddd;border-radius:8px;background:white;font-family:inherit;margin-left:4px">✕ 全部</button>
 </div>
 <div id="level-bar" style="display:none"></div>
 
@@ -314,7 +319,7 @@ body { font-size: clamp(17px, 4.5vw, 17px); }
 <!-- 聽力練習 -->
 <div id="p-listen" class="panel">
   <div class="card">
-    <div class="clabel">🎧 播放時逐字標示｜👆 點擊任何單字聆聽發音（IPA 國際音標 <button onclick="toggleIPA()" style="background:none;border:none;cursor:pointer;font-size:inherit;color:#185FA5;font-family:inherit;padding:0;line-height:1" id="ipa-toggle-btn">說明<span id="ipa-arrow">▼</span></button>）</div>
+    <div class="clabel">🎧 播放時逐字標示｜👆 點擊任何單字聆聽發音<br>（IPA 國際音標 <button onclick="toggleIPA()" style="background:none;border:none;cursor:pointer;font-size:inherit;color:#185FA5;font-family:inherit;padding:0;line-height:1" id="ipa-toggle-btn">說明<span id="ipa-arrow">▼</span></button>）</div>
     <div style="font-size:12px;color:#aaa;margin-bottom:8px">※ 逐字標示時間因每個使用者的裝置與語音速度不同，可能略有差異</div>
     <!-- 音標說明折疊 -->
     <div style="margin-bottom:10px">
@@ -1667,14 +1672,29 @@ function delArt(){ alert('請到 Google Sheets 刪除對應列，程式會在下
 let currentFilter='全部';
 let currentLevel=0; /* 0=全部 */
 
+/* 手機版標籤縮短對照表（超過2字的主題縮成2字） */
+const CAT_SHORT={'全部':'全部','國際視野':'國際','環境保護':'環境','生活科學':'生活','科技生活':'科技','宇宙搜奇':'宇宙','週末隨機盲盒':'週末'};
+function getCatLabel(c){
+  /* 手機（寬<600px）用短名，其他用全名 */
+  return window.innerWidth<600 && CAT_SHORT[c] ? CAT_SHORT[c] : c;
+}
+
 function buildFilterBar(){
   const cats=['全部',...new Set(ARTS.map(a=>a.cat).filter(Boolean))];
   const bar=document.getElementById('filter-bar');
   if(!bar) return;
   bar.style.display='flex';
   bar.innerHTML=cats.map(c=>`
-    <button class="filter-btn${c===currentFilter?' on':''}" onclick="setFilter('${c}')">${c}</button>
+    <button class="filter-btn${c===currentFilter?' on':''}" onclick="setFilter('${c}')" title="${c}">${getCatLabel(c)}</button>
   `).join('');
+  /* 漸層：滑到最右時隱藏 */
+  const fade=document.getElementById('filter-fade');
+  if(fade){
+    const checkFade=()=>{ fade.style.opacity=bar.scrollLeft+bar.clientWidth>=bar.scrollWidth-4?'0':'1'; };
+    bar.removeEventListener('scroll',checkFade);
+    bar.addEventListener('scroll',checkFade);
+    checkFade();
+  }
 
   /* 難易度篩選列 */
   const levels=[...new Set(ARTS.map(a=>a.level||0).filter(l=>l>0))].sort((a,b)=>a-b);
