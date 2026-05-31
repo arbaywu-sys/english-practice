@@ -142,10 +142,10 @@ body { font-size: 16px; }
 .badge { font-size: 12px; }
 .qq { font-size: 16px; }
 .qo { font-size: 15px; padding: 8px 11px; }
-.se { font-size: 20px; }
+.se { font-size: 24px; }
 .sz { font-size: 13px; }
 .sn { font-size: 12px; }
-.pbox { font-size: 20px; }
+.pbox { font-size: 24px; }
 .st { font-size: 13px; }
 .score-num { font-size: 38px; }
 .score-msg { font-size: 15px; }
@@ -1298,7 +1298,7 @@ function buildWordList(){
     el.innerHTML='<div style="color:#aaa;font-size:13px">這篇文章沒有單字標示</div>';
     return;
   }
-  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">`
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px">`
     + wordPool.map((v,i)=>`
     <div id="wi${i}" onclick="selectWord(${i})" style="cursor:pointer;background:${i===currentWordIdx?'#E6F1FB':'#f8f8f5'};border:0.5px solid ${i===currentWordIdx?'#185FA5':'#e0e0d8'};border-radius:10px;padding:10px 8px;text-align:center;transition:all .12s">
       <div style="font-size:14px;color:#0C447C;font-weight:600;margin-bottom:4px">${v.en}</div>
