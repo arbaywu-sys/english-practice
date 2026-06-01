@@ -45,7 +45,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .panel{display:none}.panel.on{display:block}
 .card{background:white;border-radius:14px;border:0.5px solid #e0e0d8;padding:1.1rem 1.3rem;margin-bottom:1rem;position:relative}
 .clabel{color:#888;margin-bottom:9px;display:block;}
-.eng{line-height:2.1;color:#1a1a1a;text-align:left;text-align-last:left}
+.eng{line-height:2.1;color:#1a1a1a;text-align:left}
 .vchip{background:#E6F1FB;color:#0C447C;border-radius:4px;padding:1px 6px;font-size:13px;cursor:pointer;border:none;font-family:inherit}
 .mchip{background:#EAF3DE;color:#27500A;border-radius:4px;padding:1px 6px;font-size:13px}
 .wspan{padding:1px 2px;border-radius:3px;display:inline}
@@ -452,7 +452,7 @@ body { font-size: 16px; }
 
       </div>
     </div>
-    <div class="eng" id="listen-body" style="text-align:left;text-align-last:left"></div>
+    <div class="eng" id="listen-body"></div>
   </div>
   <div class="card" style="display:none">
     <div class="st" id="ls2"></div>
@@ -1615,7 +1615,7 @@ function renderListen(){
     const i=idx++;
     const clean=word.replace(/[^a-zA-Z']/g,'');
     if(clean){
-      return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${clean.replace(/'/g,"\\'")},event)">${word}</span>`;
+      return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${clean}',event)">${word}</span>`;
     }
     return `<span class="wspan" id="lw${i}">${word}</span>`;
   });
