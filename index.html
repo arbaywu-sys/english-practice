@@ -48,7 +48,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .eng{line-height:2.1;color:#1a1a1a;text-align:left}
 .vchip{background:#E6F1FB;color:#0C447C;border-radius:4px;padding:1px 6px;font-size:13px;cursor:pointer;border:none;font-family:inherit}
 .mchip{background:#EAF3DE;color:#27500A;border-radius:4px;padding:1px 6px;font-size:13px}
-.wspan{padding:1px 2px;border-radius:3px;display:inline}
+.wspan{border-radius:3px;display:inline}
 .wspan.lit{background:#FAEEDA;color:#633806}
 .zh{line-height:2;color:#555}
 .brow{display:flex;gap:8px;flex-wrap:wrap}
@@ -1610,14 +1610,20 @@ function onListenWordClick(el, word, event){
 }
 
 function renderListen(){
-  const words=cur().eng.split(' ');
-  document.getElementById('listen-body').innerHTML=words.map((w,i)=>{
-    const clean=w.replace(/[^a-zA-Z']/g,'');
+  let idx=0;
+  const wsMap={};
+  /* 先建立單字到 index 的對應（用空白切，跟逐字標示同步）*/
+  cur().eng.split(' ').forEach((w,i)=>{ wsMap[i]=w; });
+  let wi=0;
+  const html=cur().eng.replace(/[^ ]+/g,(word)=>{
+    const i=wi++;
+    const clean=word.replace(/[^a-zA-Z']/g,'');
     if(clean){
-      return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${clean}',event)">${w} </span>`;
+      return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${clean}',event)">${word}</span>`;
     }
-    return `<span class="wspan" id="lw${i}">${w} </span>`;
-  }).join('');
+    return `<span class="wspan" id="lw${i}">${word}</span>`;
+  });
+  document.getElementById('listen-body').innerHTML=html;
 }
 function renderTranslate(){
   const vocabMap={};
