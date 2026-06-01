@@ -1610,15 +1610,16 @@ function onListenWordClick(el, word, event){
 }
 
 function renderListen(){
-  const ws=cur().eng.split(' ');
-  document.getElementById('listen-body').innerHTML=
-    ws.map((w,i)=>{
-      const clean=w.replace(/[^a-zA-Z']/g,'');
-      if(clean){
-        return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${clean}',event)">${w} </span>`;
-      }
-      return `<span class="wspan" id="lw${i}">${w} </span>`;
-    }).join('');
+  let idx=0;
+  const html=cur().eng.replace(/(\S+)/g,(word)=>{
+    const i=idx++;
+    const clean=word.replace(/[^a-zA-Z']/g,'');
+    if(clean){
+      return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${clean.replace(/'/g,"\\'")},event)">${word}</span>`;
+    }
+    return `<span class="wspan" id="lw${i}">${word}</span>`;
+  });
+  document.getElementById('listen-body').innerHTML=html;
 }
 function renderTranslate(){
   const vocabMap={};
