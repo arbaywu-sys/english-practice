@@ -685,6 +685,8 @@ async function loadLatest(){
       ci = 0;
       saveCache();
       renderAll();
+      /* 文章更新後重新拉音標快取（背景執行） */
+      loadAllPhonetics();
     } else {
       showError('無法讀取文章，請確認 Google Sheets 格式正確');
     }
@@ -1614,12 +1616,11 @@ function renderListen(){
     ws.map((w,i)=>{
       const clean=w.replace(/[^a-zA-Z']/g,'');
       if(clean){
-        return `<span class="wspan" id="lw${i}" style="cursor:pointer;display:inline-block" onclick="onListenWordClick(this,'${clean.replace(/'/g,"\'")},event)">${w}&nbsp;</span>`;
+        return `<span class="wspan" id="lw${i}" style="cursor:pointer;display:inline-block" onclick="onListenWordClick(this,'${clean}',event)">${w} </span>`;
       }
-      return `<span class="wspan" id="lw${i}" style="display:inline-block">${w}&nbsp;</span>`;
+      return `<span class="wspan" id="lw${i}" style="display:inline-block">${w}\u00a0</span>`;
     }).join('')+
     '</div>';
-}
 }
 function renderTranslate(){
   const vocabMap={};
