@@ -1620,10 +1620,6 @@ function renderListen(){
       return `<span class="wspan" id="lw${i}">${w} </span>`;
     }).join('');
 }
-      return `<span class="wspan" id="lw${i}" style="display:inline-block">${w}\u00a0</span>`;
-    }).join('')+
-    '</div>';
-}
 function renderTranslate(){
   const vocabMap={};
   (cur().vocab||[]).forEach(v=>{ vocabMap[v.en.toLowerCase()]=v.zh; });
