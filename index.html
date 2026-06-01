@@ -1614,10 +1614,10 @@ function renderListen(){
   document.getElementById('listen-body').innerHTML=words.map((w,i)=>{
     const clean=w.replace(/[^a-zA-Z']/g,'');
     if(clean){
-      return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${clean}',event)">${w}</span>`;
+      return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${clean}',event)">${w} </span>`;
     }
-    return `<span class="wspan" id="lw${i}">${w}</span>`;
-  }).join(' ');
+    return `<span class="wspan" id="lw${i}">${w} </span>`;
+  }).join('');
 }
 function renderTranslate(){
   const vocabMap={};
