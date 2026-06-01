@@ -1611,13 +1611,9 @@ function onListenWordClick(el, word, event){
 
 function renderListen(){
   let idx=0;
-  const html=cur().eng.replace(/(\S+)/g,(word)=>{
+  const html=cur().eng.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,(word)=>{
     const i=idx++;
-    const clean=word.replace(/[^a-zA-Z']/g,'');
-    if(clean){
-      return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${clean}',event)">${word}</span>`;
-    }
-    return `<span class="wspan" id="lw${i}">${word}</span>`;
+    return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${word}',event)">${word}</span>`;
   });
   document.getElementById('listen-body').innerHTML=html;
 }
