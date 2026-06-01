@@ -175,7 +175,7 @@ body { font-size: 16px; }
   body { font-size: 16px; }
   .intro-title { font-size: 20px; }
   .htitle { font-size: 20px; }
-  .eng { font-size: 19px; line-height: 2.2; }
+  .eng { font-size: 22px; line-height: 2.2; }
   .vchip { font-size: 17px; padding: 2px 8px; }
   .mchip { font-size: 17px; padding: 2px 8px; }
   .zh { font-size: 17px; line-height: 2.2; }
@@ -207,7 +207,7 @@ body { font-size: 16px; }
   body { font-size: 16px; }
   .intro-title { font-size: 22px; }
   .htitle { font-size: 22px; }
-  .eng { font-size: 20px; line-height: 2.2; }
+  .eng { font-size: 22px; line-height: 2.2; }
   .vchip { font-size: 17px; padding: 2px 9px; }
   .mchip { font-size: 17px; padding: 2px 9px; }
   .zh { font-size: 17px; line-height: 2.2; }
@@ -452,7 +452,7 @@ body { font-size: 16px; }
 
       </div>
     </div>
-    <div class="eng" id="listen-body" style="text-align:left"></div>
+    <div class="eng" id="listen-body" style="text-align:left;word-spacing:normal;word-break:normal"></div>
   </div>
   <div class="card" style="display:none">
     <div class="st" id="ls2"></div>
@@ -1609,13 +1609,17 @@ function onListenWordClick(el, word, event){
 
 function renderListen(){
   const ws=cur().eng.split(' ');
-  document.getElementById('listen-body').innerHTML=ws.map((w,i)=>{
-    const clean=w.replace(/[^a-zA-Z']/g,'');
-    if(clean){
-      return `<span class="wspan" id="lw${i}" style="cursor:pointer" onclick="onListenWordClick(this,'${clean.replace(/'/g,"\'")}',event)">${w} </span>`;
-    }
-    return `<span class="wspan" id="lw${i}">${w} </span>`;
-  }).join('');
+  document.getElementById('listen-body').innerHTML=
+    '<div style="text-align:left">'+
+    ws.map((w,i)=>{
+      const clean=w.replace(/[^a-zA-Z']/g,'');
+      if(clean){
+        return `<span class="wspan" id="lw${i}" style="cursor:pointer;display:inline-block" onclick="onListenWordClick(this,'${clean.replace(/'/g,"\'")},event)">${w}&nbsp;</span>`;
+      }
+      return `<span class="wspan" id="lw${i}" style="display:inline-block">${w}&nbsp;</span>`;
+    }).join('')+
+    '</div>';
+}
 }
 function renderTranslate(){
   const vocabMap={};
