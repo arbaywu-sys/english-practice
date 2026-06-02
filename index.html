@@ -125,6 +125,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
    平板橫向 / 桌機  ≥ 1024px
 ══════════════════════════════════════════ */
 
+/* 防止手機橫向時瀏覽器自動放大字體 */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
 /* ── 手機直向（預設） ── */
 body { font-size: 16px; }
 .intro-title { font-size: 20px; }
