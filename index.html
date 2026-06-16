@@ -1679,7 +1679,7 @@ function renderHeader(){
   document.getElementById('art-header').innerHTML=`<span class="badge">${a.day} · ${a.cat}</span>${datePart}${starPart}<div class="htitle">${a.title}</div>`;
 }
 function renderVocab(){
-  let h=cur().eng.replace(/\n/,'<br>').replace(/\n/g,' ');
+  let h=cur().eng;
   (cur().vocab||[]).forEach(v=>{
     const re=new RegExp('\\b'+v.en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','g');
     h=h.replace(re,`<button class="vchip" onclick="showVpop(this,'${v.en.replace(/'/g,"\\'")}','${v.zh.replace(/'/g,"\\'")}',event)">${v.en}</button> <span class="mchip">(${v.zh})</span>`);
@@ -1700,7 +1700,7 @@ function renderListen(){
   /* 先建立單字到 index 的對應（用空白切，跟逐字標示同步）*/
   cur().eng.split(' ').forEach((w,i)=>{ wsMap[i]=w; });
   let wi=0;
-  const html=cur().eng.replace(/\n/g,' ').replace(/[^ ]+/g,(word)=>{
+  const html=cur().eng.replace(/[^ ]+/g,(word)=>{
     const i=wi++;
     const clean=word.replace(/[^a-zA-Z']/g,'');
     if(clean){
@@ -1715,8 +1715,7 @@ function renderTranslate(){
   (cur().vocab||[]).forEach(v=>{ vocabMap[v.en.toLowerCase()]=v.zh; });
   window._curVocabMap=vocabMap;
   buildTransCache();
-  const engText=cur().eng.replace(/\n/,'<br>').replace(/\n/g,' ');
-  const words=engText.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,
+  const words=cur().eng.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,
     (match)=>`<span class="word-clickable" onclick="onTransWordClick(this,'${match.replace(/'/g,"\'")}',event)">${match}</span>`);
   document.getElementById('trans-eng').innerHTML=words;
   document.getElementById('trans-zh').textContent=cur().zh;
