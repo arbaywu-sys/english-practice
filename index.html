@@ -317,11 +317,47 @@ body { font-size: 16px; }
 </div>
 </div>
 
-<!-- 簡介 -->
-<div class="intro-box">
-  <div class="intro-title">📚 每日英文聽力口說練習</div>
-  <div class="intro-sub">每天一篇生活英文短文，四種模式幫你聽、說、讀全面練習。<br>完全免費，不需註冊，打開就能用。</div>
-  <div class="intro-lock">🔒 <strong>請放心使用</strong>｜不需要註冊帳號｜錄音只存在你的裝置，關閉即消失，不會上傳｜不蒐集任何個人資料｜沒有廣告</div>
+<!-- Banner -->
+<div style="position:relative;width:100%;border-radius:14px;overflow:hidden;margin-bottom:1rem">
+  <!-- 手機直向（< 600px）：直向圖 -->
+  <img id="banner-mobile" src="英聽程式banner5.png"
+    style="width:100%;display:block"
+    class="banner-img-mobile">
+  <!-- 平板/電腦（≥ 600px）：橫向圖 -->
+  <img id="banner-desktop" src="英聽程式banner4.png"
+    style="width:100%;display:none"
+    class="banner-img-desktop">
+  <!-- 手機直向文字（疊在圖片下方空白處）-->
+  <div class="banner-text-mobile" style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px">
+    <div style="font-size:16px;font-weight:700;color:#3a2010;margin-bottom:4px">📚 每日英文聽力口說練習</div>
+    <div style="font-size:11px;color:#5a3820;line-height:1.6;margin-bottom:4px">每天一篇生活英文短文，四種模式幫你聽、說、讀全面練習。完全免費，不需註冊，打開就能用。</div>
+    <div style="font-size:10px;color:#7a5840;line-height:1.5">🔒 請放心使用｜不需要註冊帳號｜錄音只存在你的裝置，關閉即消失，不會上傳｜不蒐集任何個人資料｜沒有廣告</div>
+  </div>
+  <!-- 平板/電腦文字（疊在左側空白處）-->
+  <div class="banner-text-desktop" style="position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;padding:20px 5%;max-width:55%">
+    <div style="font-size:clamp(16px,2vw,22px);font-weight:700;color:#3a2010;margin-bottom:6px">📚 每日英文聽力口說練習</div>
+    <div style="font-size:clamp(12px,1.4vw,15px);color:#5a3820;line-height:1.7;margin-bottom:6px">每天一篇生活英文短文，四種模式幫你聽、說、讀全面練習。完全免費，不需註冊，打開就能用。</div>
+    <div style="font-size:clamp(10px,1.1vw,12px);color:#7a5840;line-height:1.6">🔒 請放心使用｜不需要註冊帳號｜錄音只存在你的裝置，關閉即消失，不會上傳｜不蒐集任何個人資料｜沒有廣告</div>
+  </div>
+</div>
+
+<!-- 設計者的話 -->
+<div style="background:white;border:0.5px solid #e0e0d8;border-radius:14px;overflow:hidden;margin-bottom:1rem">
+  <button onclick="toggleDesignerNote()" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:none;border:none;cursor:pointer;font-family:inherit">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:16px">🤍</span>
+      <span style="font-size:14px;font-weight:600;color:#3a2010">設計者的話</span>
+    </div>
+    <span id="designer-arrow" style="font-size:14px;color:#888;transition:transform 0.2s">▼</span>
+  </button>
+  <div id="designer-note" style="display:none;padding:0 16px 16px;border-top:0.5px solid #e0e0d8">
+    <p style="font-size:14px;line-height:1.9;color:#3a2010;margin:14px 0 12px">
+      身為媽媽，我不希望兒子靠死背學英文。每天只要幾分鐘，用真實的世界時事當素材，讓單字自然融入故事與生活。我想用最安心的節奏陪伴他，讓他即使上了高中，依然對英文保有好奇心，也能透過語言，看見更寬廣的世界。這個平台，是我為他做的，也希望能陪伴更多孩子。
+    </p>
+    <div style="padding-top:10px;border-top:0.5px solid #e0e0d8">
+      <span style="font-size:12px;color:#888">遠足客製鞋墊 × 專業英文老師 共同打造</span>
+    </div>
+  </div>
 </div>
 
 <!-- 音訊設定 -->
@@ -1391,6 +1427,31 @@ function longestCommon(a,b){
 }
 
 /* ── 跟讀評分 ── */
+function toggleDesignerNote(){
+  const note=document.getElementById('designer-note');
+  const arrow=document.getElementById('designer-arrow');
+  const open=note.style.display==='none';
+  note.style.display=open?'block':'none';
+  arrow.style.transform=open?'rotate(180deg)':'rotate(0)';
+}
+
+function switchBanner(){
+  const isMobile=window.innerWidth<600;
+  const mob=document.getElementById('banner-mobile');
+  const desk=document.getElementById('banner-desktop');
+  const textMob=document.querySelector('.banner-text-mobile');
+  const textDesk=document.querySelector('.banner-text-desktop');
+  if(isMobile){
+    mob.style.display='block'; desk.style.display='none';
+    textMob.style.display='block'; textDesk.style.display='none';
+  } else {
+    mob.style.display='none'; desk.style.display='block';
+    textMob.style.display='none'; textDesk.style.display='flex';
+  }
+}
+window.addEventListener('resize', switchBanner);
+switchBanner();
+
 function toggleIPA(){
   const el=document.getElementById('ipa-explain');
   const arrow=document.getElementById('ipa-arrow');
