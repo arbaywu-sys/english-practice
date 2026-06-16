@@ -1679,7 +1679,7 @@ function renderHeader(){
   document.getElementById('art-header').innerHTML=`<span class="badge">${a.day} · ${a.cat}</span>${datePart}${starPart}<div class="htitle">${a.title}</div>`;
 }
 function renderVocab(){
-  let h=cur().eng.replace(/\n/g,'<br>');
+  let h=cur().eng.replace(/\n/,'<br>').replace(/\n/g,' ');
   (cur().vocab||[]).forEach(v=>{
     const re=new RegExp('\\b'+v.en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','g');
     h=h.replace(re,`<button class="vchip" onclick="showVpop(this,'${v.en.replace(/'/g,"\\'")}','${v.zh.replace(/'/g,"\\'")}',event)">${v.en}</button> <span class="mchip">(${v.zh})</span>`);
@@ -1715,7 +1715,7 @@ function renderTranslate(){
   (cur().vocab||[]).forEach(v=>{ vocabMap[v.en.toLowerCase()]=v.zh; });
   window._curVocabMap=vocabMap;
   buildTransCache();
-  const engText=cur().eng.replace(/\n/g,'<br>');
+  const engText=cur().eng.replace(/\n/,'<br>').replace(/\n/g,' ');
   const words=engText.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,
     (match)=>`<span class="word-clickable" onclick="onTransWordClick(this,'${match.replace(/'/g,"\'")}',event)">${match}</span>`);
   document.getElementById('trans-eng').innerHTML=words;
