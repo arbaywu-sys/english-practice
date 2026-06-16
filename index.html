@@ -329,9 +329,9 @@ body { font-size: 16px; }
     class="banner-img-desktop">
   <!-- 手機直向文字（疊在圖片下方空白處）-->
   <div class="banner-text-mobile" style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px">
-    <div style="font-size:16px;font-weight:700;color:#3a2010;margin-bottom:4px">📚 每日英文聽力口說練習</div>
-    <div style="font-size:11px;color:#5a3820;line-height:1.6;margin-bottom:4px">每天一篇生活英文短文，四種模式幫你聽、說、讀全面練習。完全免費，不需註冊，打開就能用。</div>
-    <div style="font-size:10px;color:#7a5840;line-height:1.5">🔒 請放心使用｜不需要註冊帳號｜錄音只存在你的裝置，關閉即消失，不會上傳｜不蒐集任何個人資料｜沒有廣告</div>
+    <div style="font-size:18px;font-weight:700;color:#3a2010;margin-bottom:5px">📚 每日英文聽力口說練習</div>
+    <div style="font-size:13px;color:#5a3820;line-height:1.6;margin-bottom:4px">每天一篇生活英文短文，四種模式幫你聽、說、讀全面練習。完全免費，不需註冊，打開就能用。</div>
+    <div style="font-size:11px;color:#7a5840;line-height:1.5">🔒 請放心使用｜不需要註冊帳號｜錄音只存在你的裝置，關閉即消失，不會上傳｜不蒐集任何個人資料｜沒有廣告</div>
   </div>
   <!-- 平板/電腦文字（疊在左側空白處）-->
   <div class="banner-text-desktop" style="position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;padding:20px 5%;max-width:55%">
@@ -345,8 +345,8 @@ body { font-size: 16px; }
 <div style="background:white;border:0.5px solid #e0e0d8;border-radius:14px;overflow:hidden;margin-bottom:1rem">
   <button onclick="toggleDesignerNote()" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:none;border:none;cursor:pointer;font-family:inherit">
     <div style="display:flex;align-items:center;gap:8px">
-      <span style="font-size:16px">🤍</span>
-      <span style="font-size:14px;font-weight:600;color:#3a2010">設計者的話</span>
+      <span style="font-size:16px">🧡</span>
+      <span style="font-size:14px;font-weight:600;color:#3a2010">設計者，一位媽媽想說的話</span>
     </div>
     <span id="designer-arrow" style="font-size:14px;color:#888;transition:transform 0.2s">▼</span>
   </button>
@@ -354,6 +354,23 @@ body { font-size: 16px; }
     <p style="font-size:14px;line-height:1.9;color:#3a2010;margin:14px 0 12px">
       身為媽媽，我不希望兒子靠死背學英文。每天只要幾分鐘，用真實的世界時事當素材，讓單字自然融入故事與生活。我想用最安心的節奏陪伴他，讓他即使上了高中，依然對英文保有好奇心，也能透過語言，看見更寬廣的世界。這個平台，是我為他做的，也希望能陪伴更多孩子。
     </p>
+    <div style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;color:#3a2010;margin-bottom:8px">你可以這樣學：</div>
+      <div style="font-size:13px;color:#5a3820;line-height:2">
+        👁 單字學習 — 點藍色單字，聽發音、看意思，讓單字不再陌生<br>
+        🎧 聽力練習 — 跟著逐字標示播放，點任何字都能聽發音<br>
+        📄 中英對照 — 不懂的字，點一下就有中文，不打斷閱讀節奏<br>
+        🎤 口說練習 — 開口跟讀，簡易有趣的自動評分，激發孩子開口說英文的動機
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;color:#3a2010;margin-bottom:8px">找到適合你的文章：</div>
+      <div style="font-size:13px;color:#5a3820;line-height:2">
+        📅 日期 — 每天更新，累積收藏；點日期或「載入更多」可回顧過去文章<br>
+        ⭐ 難易度 — 三顆星約國三程度，一顆星最簡單，六顆星最挑戰<br>
+        🏷 分類 — 科技、環境、生活…按主題挑選你有興趣的文章
+      </div>
+    </div>
     <div style="padding-top:10px;border-top:0.5px solid #e0e0d8">
       <span style="font-size:12px;color:#888">遠足客製鞋墊 × 專業英文老師 共同打造</span>
     </div>
@@ -1662,7 +1679,7 @@ function renderHeader(){
   document.getElementById('art-header').innerHTML=`<span class="badge">${a.day} · ${a.cat}</span>${datePart}${starPart}<div class="htitle">${a.title}</div>`;
 }
 function renderVocab(){
-  let h=cur().eng;
+  let h=cur().eng.replace(/\n/g,'<br>');
   (cur().vocab||[]).forEach(v=>{
     const re=new RegExp('\\b'+v.en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','g');
     h=h.replace(re,`<button class="vchip" onclick="showVpop(this,'${v.en.replace(/'/g,"\\'")}','${v.zh.replace(/'/g,"\\'")}',event)">${v.en}</button> <span class="mchip">(${v.zh})</span>`);
@@ -1683,7 +1700,7 @@ function renderListen(){
   /* 先建立單字到 index 的對應（用空白切，跟逐字標示同步）*/
   cur().eng.split(' ').forEach((w,i)=>{ wsMap[i]=w; });
   let wi=0;
-  const html=cur().eng.replace(/[^ ]+/g,(word)=>{
+  const html=cur().eng.replace(/\n/g,' ').replace(/[^ ]+/g,(word)=>{
     const i=wi++;
     const clean=word.replace(/[^a-zA-Z']/g,'');
     if(clean){
@@ -1698,7 +1715,8 @@ function renderTranslate(){
   (cur().vocab||[]).forEach(v=>{ vocabMap[v.en.toLowerCase()]=v.zh; });
   window._curVocabMap=vocabMap;
   buildTransCache();
-  const words=cur().eng.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,
+  const engText=cur().eng.replace(/\n/g,'<br>');
+  const words=engText.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,
     (match)=>`<span class="word-clickable" onclick="onTransWordClick(this,'${match.replace(/'/g,"\'")}',event)">${match}</span>`);
   document.getElementById('trans-eng').innerHTML=words;
   document.getElementById('trans-zh').textContent=cur().zh;
