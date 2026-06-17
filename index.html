@@ -919,6 +919,9 @@ function stopAll(){
   if(window._clearHL) window._clearHL();
   speechSynthesis.cancel();
   clearLit(); resetPauseBtns();
+  releaseMic();
+  if(typeof stopWordCheck==='function') stopWordCheck();
+  if(typeof stopCheck==='function') stopCheck();
 }
 
 function estimateChar(state){
