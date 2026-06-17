@@ -825,7 +825,7 @@ function showError(msg){
   if(el) el.innerHTML=`<div style="color:#A32D2D;font-size:14px;padding:8px">⚠️ ${msg}</div>`;
 }
 
-let mediaRec=null,recChunks=[],recBlob=null;
+let mediaRec=null,recChunks=[],recBlob=null,micStream=null;
 let recognition=null;
 const qa={};
 let parsedDraft=null;
@@ -1804,6 +1804,7 @@ function toggleRec(){
     document.getElementById('rec-st').textContent='Recording done! Press ▶ to play it back.';
   } else {
     navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+      micStream=stream;
       recChunks=[];
       /* iOS 不支援 webm，自動選擇支援的格式 */
       const mimeType=MediaRecorder.isTypeSupported('audio/webm')
@@ -1818,6 +1819,7 @@ function toggleRec(){
         recBlob=new Blob(recChunks,{type:recMime});
         document.getElementById('prec-btn').style.display='inline-flex';
         stream.getTracks().forEach(t=>t.stop());
+        micStream=null;
       };
       mediaRec.start();
       document.getElementById('rec-btn').innerHTML='<span class="dot pulse" id="rdot"></span> 停止錄音';
@@ -1825,6 +1827,14 @@ function toggleRec(){
     }).catch(()=>{document.getElementById('rec-st').textContent='Cannot access microphone. Please check browser permissions.';});
   }
 }
+/* 強制釋放麥克風（離開頁面、切換功能分頁、單字發音評分前都呼叫，避免燈一直亮著） */
+function releaseMic(){
+  if(mediaRec&&mediaRec.state==='recording'){ try{mediaRec.stop();}catch(e){} }
+  if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
+}
+window.addEventListener('beforeunload', releaseMic);
+window.addEventListener('pagehide', releaseMic);
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) releaseMic(); });
 function playRec(){if(recBlob)new Audio(URL.createObjectURL(recBlob)).play();}
 function sw(name,el){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.getElementById('p-'+name).classList.add('on');el.classList.add('on');stopAll();if(['vocab','listen','translate'].includes(name))showFloatCtrl(name);else hideFloatCtrl();}
 function delArt(){ alert('請到 Google Sheets 刪除對應列，程式會在下次開啟時自動更新。'); }
