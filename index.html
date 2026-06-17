@@ -111,7 +111,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .wspan[onclick]:hover{background:rgba(24,95,165,0.08);border-radius:3px;cursor:pointer}
 .word-clickable{cursor:pointer;display:inline}
 .word-clickable:hover{background:rgba(24,95,165,0.08);border-radius:3px}
-.word-popup{position:absolute;background:#1a1a1a;color:white;padding:10px 16px;border-radius:12px;font-size:15px;z-index:500;display:none;max-width:220px;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,0.28);pointer-events:none}
+.word-popup{position:fixed;background:#1a1a1a;color:white;padding:10px 16px;border-radius:12px;font-size:15px;z-index:500;display:none;max-width:220px;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,0.28);pointer-events:none}
 .word-popup.show{display:block}
 .word-popup-en{font-weight:700;font-size:16px;margin-bottom:4px;color:#ffffff}
 .word-popup-zh{color:#FFE066;font-size:15px;font-weight:700;letter-spacing:0.5px}
@@ -282,6 +282,13 @@ body { font-size: 16px; }
 .copyright{text-align:center;font-size:12px;color:#bbb;padding:16px 0 8px;letter-spacing:0.5px}
 /* ── 品牌標注 ── */
 .brand-bar{text-align:center;font-size:12px;color:#bbb;padding:6px 0;letter-spacing:0.5px;border-bottom:0.5px solid #eee;margin-bottom:8px}
+/* 強制保持左對齊，避免嵌入第三方網站時被外部 CSS 覆蓋 */
+.clabel,.pbox,#vocab-body,#trans-eng,#listen-body,.eng,.sz,.htitle,
+.qq,.qo,#designer-note,#designer-note p,#designer-note div,
+.banner-text-mobile,.banner-text-desktop,
+#speak-prompt,#word-check-prompt,#check-prompt,
+.st,.info-box,#score-info,#score-info p,#score-info div,#score-info-btn,
+.si,#prac-cn,.zh,.card,.header{text-align:left !important}
 </style>
 </head>
 <body>
@@ -320,11 +327,11 @@ body { font-size: 16px; }
 <!-- Banner -->
 <div style="position:relative;width:100%;border-radius:14px;overflow:hidden;margin-bottom:1rem">
   <!-- 手機直向（< 600px）：直向圖 -->
-  <img id="banner-mobile" src="英聽程式banner5.png"
+  <img id="banner-mobile" src="https://irp.cdn-website.com/4bba5140/dms3rep/multi/%E8%8B%B1%E8%81%BD%E7%A8%8B%E5%BC%8Fbanner5.png"
     style="width:100%;display:block"
     class="banner-img-mobile">
   <!-- 平板/電腦（≥ 600px）：橫向圖 -->
-  <img id="banner-desktop" src="英聽程式banner4.png"
+  <img id="banner-desktop" src="https://irp.cdn-website.com/4bba5140/dms3rep/multi/%E8%8B%B1%E8%81%BD%E7%A8%8B%E5%BC%8Fbanner4.png"
     style="width:100%;display:none"
     class="banner-img-desktop">
   <!-- 手機直向文字（疊在圖片下方空白處）-->
@@ -681,6 +688,7 @@ function parseRaw(raw){
   function extractBlock(start,end){ if(start<0)return''; return lines.slice(start+1,end>0?end:lines.length).filter(l=>l.trim()&&!/^[📱👁️🎧📄✨]/.test(l.trim())).join(' ').trim(); }
   const seg1=extractBlock(s1,s2>0?s2:s3),seg2=extractBlock(s2,s3),seg3=extractBlock(s3,lines.length);
   let engPara=seg2.trim()||(seg1?seg1.replace(/[（(][^）)]{1,20}[）)]/g,'').replace(/\s+/g,' ').trim():'');
+  engPara=engPara.replace(/\n/g,' ').replace(/\s+/g,' ').trim();
   const zhPara=seg3.trim();
   const vocab=[];
   if(seg1){const re=/([A-Za-z]{2,})[（(]([^）)]{1,30})[）)]/g;let m;while((m=re.exec(seg1))!==null){const en=m[1].trim(),zh=m[2].trim();if(!/^\d+$/.test(en)&&!vocab.find(v=>v.en===en))vocab.push({en,zh});}}
@@ -1073,28 +1081,6 @@ function playCS(){
   run(0);
 }
 
-function showWordPopup(word, zh, event){
-  const popup=document.getElementById('word-popup');
-  const wpEn=document.getElementById('wp-en');
-  const wpZh=document.getElementById('wp-zh');
-  wpEn.textContent=word;
-  wpZh.textContent=zh||'';
-  /* 位置：點擊處上方 */
-  const x=Math.min(event.clientX, window.innerWidth-220);
-  const y=Math.max(event.clientY-60, 10);
-  popup.style.left=x+'px';
-  popup.style.top=y+'px';
-  popup.classList.add('show');
-  /* 3秒後自動消失 */
-  clearTimeout(popup._timer);
-  popup._timer=setTimeout(()=>popup.classList.remove('show'),3000);
-}
-document.addEventListener('click',(e)=>{
-  if(e.target.classList.contains('word-clickable')) return;
-  const p=document.getElementById('word-popup');
-  if(p) p.classList.remove('show');
-});
-
 /* ── 音標查詢 ── */
 function showPhoneticPopup(word, phonetic, event){
   const popup=document.getElementById('phonetic-popup');
@@ -1364,7 +1350,7 @@ function buildWordList(){
     <div id="wi${i}" onclick="selectWord(${i})" style="cursor:pointer;background:${i===currentWordIdx?'#E6F1FB':'#f8f8f5'};border:0.5px solid ${i===currentWordIdx?'#185FA5':'#e0e0d8'};border-radius:10px;padding:10px 8px;text-align:center;transition:all .12s">
       <div style="font-size:14px;color:#0C447C;font-weight:600;margin-bottom:4px">${v.en}</div>
       <div style="font-size:11px;color:#888;margin-bottom:8px">${v.zh}</div>
-      <button onclick="event.stopPropagation();speakWord('${v.en.replace(/'/g,"\'")}')" style="border:0.5px solid #d0d0c8;border-radius:6px;background:white;padding:2px 8px;cursor:pointer;font-size:11px;color:#555;font-family:inherit">▶</button>
+      <button onclick="event.stopPropagation();speakWord('${v.en.replace(/'/g,"\'").replace(/"/g,'&quot;')}')" style="border:0.5px solid #d0d0c8;border-radius:6px;background:white;padding:2px 8px;cursor:pointer;font-size:11px;color:#555;font-family:inherit">▶</button>
     </div>`).join('')
     + `</div>`;
 }
@@ -1606,6 +1592,7 @@ function doParse(){
   function extractBlock(start,end){ if(start<0)return''; return lines.slice(start+1,end>0?end:lines.length).filter(l=>l.trim()&&!/^[📱👁️🎧📄✨]/.test(l.trim())).join(' ').trim(); }
   const seg1=extractBlock(s1,s2>0?s2:s3),seg2=extractBlock(s2,s3),seg3=extractBlock(s3,lines.length);
   let engPara=seg2.trim()||(seg1?seg1.replace(/[（(][^）)]{1,20}[）)]/g,'').replace(/\s+/g,' ').trim():'');
+  engPara=engPara.replace(/\n/g,' ').replace(/\s+/g,' ').trim();
   const zhPara=seg3.trim();
   const vocab=[];
   if(seg1){const re=/([A-Za-z]{2,})[（(]([^）)]{1,30})[）)]/g;let m;while((m=re.exec(seg1))!==null){const en=m[1].trim(),zh=m[2].trim();if(!/^\d+$/.test(en)&&!vocab.find(v=>v.en===en))vocab.push({en,zh});}}
@@ -1682,7 +1669,7 @@ function renderVocab(){
   let h=cur().eng;
   (cur().vocab||[]).forEach(v=>{
     const re=new RegExp('\\b'+v.en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','g');
-    h=h.replace(re,`<button class="vchip" onclick="showVpop(this,'${v.en.replace(/'/g,"\\'")}','${v.zh.replace(/'/g,"\\'")}',event)">${v.en}</button> <span class="mchip">(${v.zh})</span>`);
+    h=h.replace(re,`<button class="vchip" onclick="showVpop(this,'${v.en.replace(/'/g,"\\'").replace(/"/g,'&quot;')}','${v.zh.replace(/'/g,"\\'").replace(/"/g,'&quot;')}',event)">${v.en}</button> <span class="mchip">(${v.zh})</span>`);
   });
   document.getElementById('vocab-body').innerHTML=h;
 }
@@ -1716,7 +1703,7 @@ function renderTranslate(){
   window._curVocabMap=vocabMap;
   buildTransCache();
   const words=cur().eng.replace(/\b([a-zA-Z]+(?:'[a-zA-Z]+)?)\b/g,
-    (match)=>`<span class="word-clickable" onclick="onTransWordClick(this,'${match.replace(/'/g,"\'")}',event)">${match}</span>`);
+    (match)=>`<span class="word-clickable" onclick="onTransWordClick(this,'${match.replace(/'/g,"\'").replace(/"/g,'&quot;')}',event)">${match}</span>`);
   document.getElementById('trans-eng').innerHTML=words;
   document.getElementById('trans-zh').textContent=cur().zh;
 }
@@ -1732,7 +1719,7 @@ function renderSentList(){
     <div class="si${i===si?' sel':''}" id="si${i}" onclick="selSent(${i})">
       <span class="sn">${i+1}</span>
       <div style="flex:1"><div class="se">${s.trim()}</div><div class="sz">${(zz[i]||'').trim()}</div></div>
-      <button onclick="event.stopPropagation();speakWord('${s.trim().replace(/'/g,"\\'")}')" style="border:0.5px solid #ddd;border-radius:8px;background:white;padding:3px 8px;cursor:pointer;font-size:12px;color:#888;font-family:inherit">▶</button>
+      <button onclick="event.stopPropagation();speakWord('${s.trim().replace(/\n/g,' ').replace(/'/g,"\\'").replace(/"/g,'&quot;')}')" style="border:0.5px solid #ddd;border-radius:8px;background:white;padding:3px 8px;cursor:pointer;font-size:12px;color:#888;font-family:inherit">▶</button>
     </div>`).join('');
 }
 function renderPrac(){const zh=sentsZh(),en=sents();document.getElementById('prac-cn').textContent=(zh[pi%zh.length]||'').trim();document.getElementById('prac-ans').style.display='none';document.getElementById('prac-ans').textContent=(en[pi%en.length]||'').trim();}
@@ -2185,11 +2172,11 @@ function showWordPopup(word, zh, event){
   if(left < 8) left = 8;
   if(left + pw > vw - 8) left = vw - pw - 8;
 
-  let top = y - ph - 16;
+  let top = y - ph - 24;
   if(top < 8) top = y + 22;   /* 上方不足就改到下方 */
 
   popup.style.left = left + 'px';
-  popup.style.top  = (top + window.scrollY) + 'px';
+  popup.style.top  = top + 'px';
 
   /* 計時器：查詢中不消失；翻譯回來後 1.5 秒消失 */
   clearTimeout(popup._hideTimer);
