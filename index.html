@@ -2139,6 +2139,23 @@ async function adminSave(){
 }
 
 /* ── 管理文章（修改／刪除） ── */
+async function adminLoadMore(){
+  const btn=document.getElementById('admin-load-more-btn');
+  const status=document.getElementById('admin-load-more-status');
+  const before=ARTS.length;
+  btn.disabled=true; btn.textContent='載入中…';
+  await loadMore(); /* 共用前台同一套載入邏輯，確保資料一致、不重複維護兩套程式 */
+  buildArtList(); /* 重新渲染管理列表，把新載入的文章一起顯示出來 */
+  const added=ARTS.length-before;
+  btn.disabled=false; btn.textContent='⬇ 載入更多舊文章（每次 7 篇）';
+  if(loadedRows>=totalRows-1){
+    status.textContent=`已載入全部 ${ARTS.length} 篇文章`;
+    btn.style.display='none';
+  } else {
+    status.textContent=added>0?`已載入，目前共 ${ARTS.length} 篇`:'沒有更多文章了';
+  }
+}
+
 function buildArtList(){
   const el=document.getElementById('admin-art-list');
   if(!ARTS.length){el.innerHTML='<div style="color:#888;font-size:13px">目前沒有文章</div>';return;}
@@ -2389,6 +2406,10 @@ showFloatCtrl('vocab');
     <!-- 管理文章 -->
     <div id="admin-manage" class="admin-panel">
       <div id="admin-art-list"></div>
+      <div style="display:flex;justify-content:center;margin-top:12px">
+        <button class="btn" id="admin-load-more-btn" onclick="adminLoadMore()" style="font-size:13px">⬇ 載入更多舊文章（每次 7 篇）</button>
+      </div>
+      <div id="admin-load-more-status" style="text-align:center;font-size:12px;color:#888;margin-top:6px"></div>
     </div>
   </div>
 </div>
