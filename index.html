@@ -1877,7 +1877,9 @@ let currentFilter='全部';
 let currentLevel=0; /* 0=全部 */
 
 /* 手機版標籤縮短對照表（超過2字的主題縮成2字） */
-const CAT_SHORT={'全部':'全部','國際視野':'國際','環境保護':'環境','生活科學':'生活','科技生活':'科技','宇宙搜奇':'宇宙','週末隨機盲盒':'週末'};
+const CAT_SHORT={'全部':'全部','生活科學':'科學','世界歷史':'世界','環境保護':'環境','太空科技':'太空','國際文化':'文化','足部選鞋':'足部'};
+/* 標準分類清單（管理員上傳/編輯文章時用此清單把關，避免分類名稱不一致） */
+const CAT_LIST=['生活科學','世界歷史','環境保護','太空科技','國際文化','足部選鞋'];
 function getCatLabel(c){
   /* 手機（寬<600px）用短名，其他用全名 */
   return window.innerWidth<600 && CAT_SHORT[c] ? CAT_SHORT[c] : c;
@@ -2062,13 +2064,30 @@ function adminParse(){
   const parsed=parseRaw(raw);
   if(!parsed){showAdminErr('解析失敗，請確認素材包含第二段和第三段');return;}
   adminDraft={...parsed,_raw:raw};
-  document.getElementById('apr-day').innerHTML=`<b>日期：</b>${parsed.date||'（未填）'}｜<b>星期：</b>${parsed.day||'（未填）'}｜<b>主題：</b>${parsed.cat}｜<b>難易度：</b>${parsed.level?'⭐'.repeat(parsed.level):'（未填）'}`;
+  document.getElementById('apr-day').innerHTML=`<b>日期：</b>${parsed.date||'（未填）'}｜<b>星期：</b>${parsed.day||'（未填）'}｜<b>難易度：</b>${parsed.level?'⭐'.repeat(parsed.level):'（未填）'}`;
   document.getElementById('apr-title').innerHTML=`<b>標題：</b>${parsed.title}`;
+  /* 分類確認下拉選單：自動比對標準清單，沒對到就停在「請選擇」逼管理員手動確認 */
+  const catMatch=CAT_LIST.includes(parsed.cat) ? parsed.cat : '';
+  document.getElementById('apr-cat-wrap').innerHTML=`<b>主題：</b><select id="apr-cat-select" onchange="onAprCatChange(this.value)" style="font-family:inherit;font-size:13px;padding:3px 6px;border-radius:6px;border:0.5px solid #ccc">
+    <option value="" ${catMatch?'':'selected'}>⚠️ 請選擇分類（原文：${parsed.cat||'空白'}）</option>
+    ${CAT_LIST.map(c=>`<option value="${c}" ${c===catMatch?'selected':''}>${c}</option>`).join('')}
+  </select>`;
   document.getElementById('apr-eng').innerHTML=`<b>英文：</b>${parsed.eng.slice(0,80)}…`;
   document.getElementById('apr-vocab').innerHTML=parsed.vocab.map(v=>`<span class="vocab-tag">${v.en} ${v.zh}</span>`).join('');
   document.getElementById('admin-parse-result').style.display='block';
-  document.getElementById('admin-save-btn').style.display='inline-flex';
+  /* 分類未確認時不給存檔，避免髒資料流入 Sheets */
+  document.getElementById('admin-save-btn').style.display=catMatch?'inline-flex':'none';
   document.getElementById('admin-reset-btn').style.display='inline-flex';
+}
+
+/* 標準分類清單已移至檔案前段（與 CAT_SHORT 放在一起集中管理） */
+
+function onAprCatChange(newCat){
+  if(!adminDraft)return;
+  adminDraft.cat=newCat;
+  /* 同步改寫 _raw 文字裡的【主題】，確保存檔送出的素材跟畫面上選的分類一致 */
+  adminDraft._raw=adminDraft._raw.replace(/【[^】]*】/,`【${newCat}】`);
+  document.getElementById('admin-save-btn').style.display=newCat?'inline-flex':'none';
 }
 
 function adminReset(){
@@ -2130,6 +2149,10 @@ function buildArtList(){
         <div class="art-item-sub">${a.day}｜${a.cat}</div>
         <div class="edit-form" id="edit-form-${i}">
           <div class="edit-field"><label>標題</label><input id="edit-title-${i}" value="${a.title.replace(/"/g,'&quot;')}"></div>
+          <div class="edit-field"><label>分類</label><select id="edit-cat-${i}" style="width:100%;font-family:inherit;font-size:13px;padding:7px 10px;border:0.5px solid #ccc;border-radius:8px;background:white;color:#1a1a1a">
+            ${CAT_LIST.map(c=>`<option value="${c}" ${c===a.cat?'selected':''}>${c}</option>`).join('')}
+            ${CAT_LIST.includes(a.cat)?'':`<option value="${a.cat}" selected>⚠️ ${a.cat}（非標準分類，請改選上方選項）</option>`}
+          </select></div>
           <div class="edit-field"><label>英文段落</label><textarea id="edit-eng-${i}" rows="4">${a.eng}</textarea></div>
           <div class="edit-field"><label>中文翻譯</label><textarea id="edit-zh-${i}" rows="3">${a.zh}</textarea></div>
           <div style="display:flex;gap:8px;margin-top:8px">
@@ -2153,6 +2176,7 @@ function toggleEdit(i){
 async function saveEdit(i){
   const oldTitle=ARTS[i].title;
   ARTS[i].title=document.getElementById('edit-title-'+i).value.trim();
+  ARTS[i].cat=document.getElementById('edit-cat-'+i).value;
   ARTS[i].eng=document.getElementById('edit-eng-'+i).value.trim();
   ARTS[i].zh=document.getElementById('edit-zh-'+i).value.trim();
   saveCache(); renderAll(); buildArtList();
@@ -2350,6 +2374,7 @@ showFloatCtrl('vocab');
         <div style="font-weight:600;margin-bottom:6px">✅ 解析成功，確認內容：</div>
         <div id="apr-day" style="margin-bottom:4px"></div>
         <div id="apr-title" style="margin-bottom:4px"></div>
+        <div id="apr-cat-wrap" style="margin-bottom:6px"></div>
         <div id="apr-eng" style="color:#555;font-size:12px;margin-bottom:4px"></div>
         <div id="apr-vocab" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px"></div>
       </div>
