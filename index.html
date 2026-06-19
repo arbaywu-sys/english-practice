@@ -248,6 +248,11 @@ body { font-size: 16px; }
   .brow { gap: 6px; }
 }
 
+/* ── 手機版浮動播放按鈕：降低透明度，提升辨識度（< 600px） ── */
+@media (max-width: 599px) {
+  .fcbtn { background: rgba(173,216,230,0.85); }
+}
+
 .admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:1rem}
 .admin-overlay.show{display:flex}
 .admin-modal{background:white;border-radius:16px;padding:1.5rem;max-width:640px;width:100%;max-height:90vh;overflow-y:auto}
@@ -288,7 +293,7 @@ body { font-size: 16px; }
 .banner-text-mobile,.banner-text-desktop,
 #speak-prompt,#word-check-prompt,#check-prompt,
 .st,.info-box,#score-info,#score-info p,#score-info div,#score-info-btn,
-.si,#prac-cn,.zh,.card,.header{text-align:left !important}
+.si,#prac-cn,.zh,.card,.header,.settings-card,.settings-label,.settings-grid,.srow{text-align:left !important}
 </style>
 </head>
 <body>
@@ -361,6 +366,9 @@ body { font-size: 16px; }
     <p style="font-size:14px;line-height:1.9;color:#3a2010;margin:14px 0 12px">
       身為媽媽，我不希望孩子靠死背學英文。每天只需要幾分鐘，用真實的世界時事當素材，讓單字自然融入故事與生活。我想用最安心的節奏陪伴，讓他們即使上了高中，依然對英文保有好奇心，能透過語言，看見更寬廣的世界。這個平台，是我為他們做的，分享給更多父母，陪伴更多可愛的孩子。
     </p>
+    <p style="font-size:14px;line-height:1.9;color:#3a2010;margin:0 0 14px">
+      如果你也常常久站久走，歡迎了解<a href="https://www.excursioninsole.com.tw/standing-shoes" target="_blank" style="color:#B06030;font-weight:600;text-decoration:none">適合久站的鞋款</a>，或看看<a href="https://www.excursioninsole.com.tw/2025-%E5%A5%BD%E7%A9%BF%E7%9A%84%E9%81%8B%E5%8B%95%E9%9E%8B%E6%8E%A8%E8%96%A6" target="_blank" style="color:#B06030;font-weight:600;text-decoration:none">運動鞋介紹</a>。
+    </p>
     <div style="margin-bottom:14px">
       <div style="font-size:13px;font-weight:600;color:#3a2010;margin-bottom:8px">你可以這樣學：</div>
       <div style="font-size:13px;color:#5a3820;line-height:2">
@@ -419,6 +427,15 @@ body { font-size: 16px; }
   <div style="display:flex;gap:6px;flex-wrap:wrap">
     <button class="btn" onclick="loadMore()" id="load-more-btn">⬅ 載入更多</button>
     <button class="btn" onclick="loadLatest()" title="按此載入最新文章">🔄 刷新文章</button>
+  </div>
+</div>
+
+<!-- 分享區塊 -->
+<div style="background:white;border:0.5px solid #e0e0d8;border-radius:14px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:nowrap;overflow-x:auto">
+  <span style="font-size:12px;color:#555;white-space:nowrap;flex-shrink:0">分享給朋友一起學 🧡</span>
+  <div style="display:flex;gap:6px;flex-shrink:0">
+    <button onclick="shareCopyLink()" id="share-copy-btn" style="font-size:11px;display:flex;align-items:center;gap:3px;padding:6px 10px;border-radius:8px;border:0.5px solid #ddd;background:white;cursor:pointer;color:#555;font-family:inherit;white-space:nowrap">🔗 複製連結</button>
+    <a href="javascript:void(0)" onclick="shareLine()" style="font-size:11px;display:inline-flex;align-items:center;gap:3px;padding:6px 10px;border-radius:8px;border:0.5px solid #ddd;background:white;text-decoration:none;color:#555;font-family:inherit;white-space:nowrap">💬 LINE</a>
   </div>
 </div>
 
@@ -756,7 +773,7 @@ async function loadLatest(){
       /* 文章更新後重新拉音標快取（背景執行） */
       loadAllPhonetics();
     } else {
-      showError('無法讀取文章，請確認 Google Sheets 格式正確');
+      showError('文章載入失敗，請點右上角選單「在瀏覽器 Chrome/Safari 中開啟」，或稍後再試一次');
     }
   } catch(e){
     /* 讀取失敗，用快取 */
@@ -1827,17 +1844,29 @@ function toggleRec(){
       mediaRec.start();
       document.getElementById('rec-btn').innerHTML='<span class="dot pulse" id="rdot"></span> 停止錄音';
       document.getElementById('rec-st').textContent='🔴 Recording…';
+      /* 保險絲：最長錄音 60 秒，即使背景凍結導致事件沒觸發，也會在下次甦醒時自動停止 */
+      clearTimeout(window._micSafetyTimer);
+      window._micSafetyTimer=setTimeout(()=>{ releaseMic(); resetRecBtn(); }, 60000);
     }).catch(()=>{document.getElementById('rec-st').textContent='Cannot access microphone. Please check browser permissions.';});
   }
 }
+function resetRecBtn(){
+  document.getElementById('rec-btn').innerHTML='<span class="dot" id="rdot"></span> 開始錄音';
+  document.getElementById('rec-st').textContent='Recording stopped automatically.';
+}
 /* 強制釋放麥克風（離開頁面、切換功能分頁、單字發音評分前都呼叫，避免燈一直亮著） */
 function releaseMic(){
+  clearTimeout(window._micSafetyTimer);
   if(mediaRec&&mediaRec.state==='recording'){ try{mediaRec.stop();}catch(e){} }
   if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
 }
 window.addEventListener('beforeunload', releaseMic);
 window.addEventListener('pagehide', releaseMic);
-document.addEventListener('visibilitychange', ()=>{ if(document.hidden) releaseMic(); });
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    releaseMic();
+  }
+});
 function playRec(){if(recBlob)new Audio(URL.createObjectURL(recBlob)).play();}
 function sw(name,el){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.getElementById('p-'+name).classList.add('on');el.classList.add('on');stopAll();if(['vocab','listen','translate'].includes(name))showFloatCtrl(name);else hideFloatCtrl();}
 function delArt(){ alert('請到 Google Sheets 刪除對應列，程式會在下次開啟時自動更新。'); }
@@ -2227,6 +2256,22 @@ async function startup(){
   await loadAllTranslations();
   loadAllPhonetics(); /* 音標在背景繼續，不等它 */
 }
+/* ── 分享功能 ── */
+function shareCopyLink(){
+  const url='https://www.excursioninsole.com.tw/english-practice?utm_source=share&utm_medium=copy_link';
+  navigator.clipboard.writeText(url).then(()=>{
+    const btn=document.getElementById('share-copy-btn');
+    const old=btn.textContent;
+    btn.textContent='✅ 已複製！';
+    setTimeout(()=>{ btn.textContent=old; }, 2000);
+  }).catch(()=>{ alert('複製失敗，請手動複製網址'); });
+}
+function shareLine(){
+  const url='https://www.excursioninsole.com.tw/english-practice?utm_source=share&utm_medium=line';
+  const text='每天幾分鐘，輕鬆練英文聽力口說！免費推薦給你 🧡';
+  window.open('https://line.me/R/share?text='+encodeURIComponent(text+' '+url),'_blank');
+}
+
 startup();
 /* 頁面完全載入後顯示浮動按鈕 */
 window.addEventListener('DOMContentLoaded', ()=>{ showFloatCtrl('vocab'); });
@@ -2266,7 +2311,7 @@ showFloatCtrl('vocab');
 </script>
 
 <!-- 版權聲明 -->
-<div class="copyright">© 2026 遠足客製鞋墊 版權所有</div>
+<div class="copyright">© 2026 <a href="https://www.excursioninsole.com.tw/" target="_blank" style="color:inherit;text-decoration:underline">遠足客製鞋墊</a> 版權所有</div>
 
 <!-- 管理員入口 -->
 <button class="admin-btn" onclick="openAdmin()" title="管理員登入">⚙</button>
