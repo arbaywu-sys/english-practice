@@ -463,6 +463,7 @@ body { font-size: 16px; }
   <button class="tab" onclick="sw('listen',this)">🎧 聽力練習</button>
   <button class="tab" onclick="sw('translate',this)">📄 中英對照</button>
   <button class="tab" onclick="sw('speak',this)">🎤 口說練習</button>
+  <button class="tab" onclick="sw('lookup',this)">🔍 自由查字</button>
 </div>
 
 <!-- 單字學習 -->
@@ -655,10 +656,22 @@ body { font-size: 16px; }
   </div>
 </div>
 
+<!-- 自由查字 -->
+<div id="p-lookup" class="panel">
+  <div class="card">
+    <div class="clabel">🔍 輸入任何英文字，查發音、音標與中文意思</div>
+    <div class="brow" style="margin-bottom:10px">
+      <input id="lookup-input" type="text" placeholder="輸入英文字，例如：apple" style="flex:1;font-family:inherit;font-size:14px;padding:9px 12px;border:0.5px solid #ccc;border-radius:10px;background:white;color:#1a1a1a" onkeydown="if(event.key==='Enter')lookupWord()">
+      <button class="btn primary" onclick="lookupWord()">查詢</button>
+    </div>
+    <div id="lookup-result"></div>
+  </div>
+</div>
+
 </div>
 <script>
 const SHEET_ID = "1zrH98sk6HMrLuZxSumKq0tH9PGWh878xw7PzQUG8v8U";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8lkTPSPSsSG68enKVJKfl1KG1KmjS-QIAGnTXnAwL1SyCkVD5csEC3YX6MS1ry5qX/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxUC3tdt4ThbDQI4GocpGBEkjGTQDZtfLuA9OvWe_fCHalIEXS2FuoIgr4DLCPMsMu/exec";
 const CACHE_KEY = "eng_arts_cache";
 const CACHE_TS_KEY = "eng_arts_ts";
 const CACHE_HOURS = 1; /* 快取 1 小時，之後自動重新檢查 */
@@ -1215,6 +1228,71 @@ async function fetchPhonetic(word, event){
   phPh.className='ph-phonetic';
   clearTimeout(popup._timer);
   popup._timer=setTimeout(()=>popup.classList.remove('show'),3000);
+}
+
+/* ── 自由查字（獨立分頁：任何英文字 → 音標 + 發音 + 中文翻譯 + 英文釋義） ── */
+/* 音標／釋義／翻譯都呼叫現有 Apps Script（getPhonetic / getTranslation），
+   與「中英對照」「點單字看音標」共用同一套資料源（Sheets 快取 + Google 翻譯），
+   確保全站翻譯品質與結果一致，不另外引入第三方翻譯服務 */
+async function fetchPhoneticFromAppsScript(word){
+  try{
+    const res=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'getPhonetic', word})});
+    const json=await res.json();
+    if(json.success) return {phonetic: json.phonetic||null, definitions: json.definitions||[]};
+  }catch(e){}
+  return {phonetic:null, definitions:[]};
+}
+async function fetchTranslationFromAppsScript(word){
+  try{
+    const res=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'getTranslation', word})});
+    const json=await res.json();
+    if(json.success && json.translation) return json.translation;
+  }catch(e){}
+  return null;
+}
+
+async function lookupWord(){
+  const input=document.getElementById('lookup-input');
+  const word=input.value.trim();
+  const resultEl=document.getElementById('lookup-result');
+  if(!word){ resultEl.innerHTML='<div class="st" style="color:#A32D2D">請先輸入英文字</div>'; return; }
+  if(!/^[a-zA-Z\s\-']+$/.test(word)){ resultEl.innerHTML='<div class="st" style="color:#A32D2D">請輸入英文字（不支援中文或符號）</div>'; return; }
+
+  resultEl.innerHTML='<div class="st">查詢中…</div>';
+
+  const wl=word.toLowerCase();
+  const [phResult, zhResult]=await Promise.allSettled([
+    fetchPhoneticFromAppsScript(wl),
+    fetchTranslationFromAppsScript(wl)
+  ]);
+
+  const phData = phResult.status==='fulfilled' ? phResult.value : {phonetic:null, definitions:[]};
+  const phonetic = phData.phonetic;
+  const definitions = phData.definitions || [];
+  const zh = zhResult.status==='fulfilled' ? zhResult.value : null;
+
+  if(!phonetic && !zh && definitions.length===0){
+    resultEl.innerHTML=`<div class="st" style="color:#A32D2D">查不到「${word.replace(/</g,'&lt;')}」，請確認拼字是否正確</div>`;
+    return;
+  }
+
+  const defHTML = definitions.length
+    ? `<div style="margin-top:8px;font-size:13px;color:#666;line-height:1.6">
+        <div style="color:#888;margin-bottom:3px">📖 英文釋義：</div>
+        ${definitions.map(d=>`• ${d.replace(/</g,'&lt;')}`).join('<br>')}
+      </div>`
+    : '';
+
+  resultEl.innerHTML=`
+    <div class="card" style="background:#f8f8f5;margin-top:4px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:20px;font-weight:600;color:#1a1a1a">${word.replace(/</g,'&lt;')}</span>
+        ${phonetic?`<span style="color:#888">${phonetic}</span>`:''}
+        <button class="btn" onclick="speakWord('${word.replace(/'/g,"\\'")}')" style="padding:4px 10px">▶️</button>
+      </div>
+      <div style="margin-top:8px;color:#27500A;font-size:15px">${zh?zh.replace(/</g,'&lt;'):'（查無中文翻譯）'}</div>
+      ${defHTML}
+    </div>`;
 }
 
 /* ── 翻譯快取（頁面載入時從 Sheets 一次抓取） ── */
