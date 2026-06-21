@@ -342,13 +342,13 @@ body { font-size: 16px; }
   <!-- 手機直向文字（疊在圖片下方空白處）-->
   <div class="banner-text-mobile" style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px">
     <div style="font-size:18px;font-weight:700;color:#3a2010;margin-bottom:5px">📚 每日英文聽力口說練習</div>
-    <div style="font-size:13px;color:#5a3820;line-height:1.6;margin-bottom:4px">每天一篇生活英文短文，四種模式幫你聽、說、讀全面練習。完全免費，不需註冊，打開就能用。</div>
+    <div style="font-size:13px;color:#5a3820;line-height:1.6;margin-bottom:4px">每天一篇有趣的生活英文短文，四種模式幫你聽、說、讀全面練習。完全免費，不需註冊，打開就能用。</div>
     <div style="font-size:11px;color:#7a5840;line-height:1.5">🔒 請放心使用｜不需要註冊帳號｜錄音只存在你的裝置，關閉即消失，不會上傳｜不蒐集任何個人資料｜沒有廣告</div>
   </div>
   <!-- 平板/電腦文字（疊在左側空白處）-->
   <div class="banner-text-desktop" style="position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;padding:20px 5%;max-width:55%">
     <div style="font-size:clamp(16px,2vw,22px);font-weight:700;color:#3a2010;margin-bottom:6px">📚 每日英文聽力口說練習</div>
-    <div style="font-size:clamp(14px,1.6vw,17px);color:#5a3820;line-height:1.7;margin-bottom:6px">每天一篇生活英文短文，四種模式幫你聽、說、讀全面練習。完全免費，不需註冊，打開就能用。</div>
+    <div style="font-size:clamp(14px,1.6vw,17px);color:#5a3820;line-height:1.7;margin-bottom:6px">每天一篇有趣的生活英文短文，四種模式幫你聽、說、讀全面練習。完全免費，不需註冊，打開就能用。</div>
     <div style="font-size:clamp(12px,1.2vw,14px);color:#7a5840;line-height:1.6">🔒 請放心使用｜不需要註冊帳號｜錄音只存在你的裝置，關閉即消失，不會上傳｜不蒐集任何個人資料｜沒有廣告</div>
   </div>
 </div>
@@ -394,7 +394,6 @@ body { font-size: 16px; }
 
 <!-- 音訊設定 -->
 <div class="settings-card">
-  <div class="settings-label">🎛 音訊設定（全域）</div>
   <div class="settings-grid">
     <div class="srow">
       <label>聲音</label>
@@ -590,6 +589,7 @@ body { font-size: 16px; }
       <button class="btn" onclick="pickRandomWord()">🎲 隨機換字</button>
       <span style="font-size:12px;color:#aaa;align-self:center">* Scoring requires Chrome browser</span>
     </div>
+    <div style="font-size:12px;color:#aaa;margin-top:4px">如果麥克風沒有啟動，需檢查chrome app設定</div>
     <div class="st" id="word-check-st"></div>
     <div class="score-box" id="word-score-box" style="display:none">
       <div class="score-num" id="word-score-num"></div>
@@ -610,6 +610,7 @@ body { font-size: 16px; }
       <button class="btn" id="stop-check-btn" onclick="stopCheck()" style="display:none">⏹ Stop</button>
       <span style="font-size:12px;color:#aaa;align-self:center" id="chrome-notice">* Scoring requires Chrome browser</span>
     </div>
+    <div style="font-size:12px;color:#aaa;margin-top:4px">如果麥克風沒有啟動，需檢查chrome app設定</div>
     <div class="st" id="check-st"></div>
     <div class="score-box" id="score-box">
       <div class="score-num" id="score-num"></div>
@@ -1182,12 +1183,21 @@ function savePhoneticToSheet(word, phonetic){
   }catch(e){}
 }
 
+/* ── 背景補釋義快取：點單字時若釋義快取缺漏，順手補上，不影響畫面顯示速度 ── */
+let _defCheckedThisSession={}; /* 避免同一次開站期間對同一個字重複發請求 */
+function ensureDefinitionCached(wl){
+  if(_defCheckedThisSession[wl]) return;
+  _defCheckedThisSession[wl]=true;
+  fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'getPhonetic', word:wl})}).catch(()=>{});
+}
+
 async function fetchPhonetic(word, event){
   const wl=word.toLowerCase();
   /* 1. 先查本地快取（含 localStorage） */
   if(_phonCache[wl]){
     const cached=_phonCache[wl];
     showPhoneticPopup(word, cached==='-'?'查無音標':cached, event);
+    ensureDefinitionCached(wl); /* 前端快取命中時不會再打後端，這裡背景補查一次釋義，避免舊字永遠補不到釋義 */
     return;
   }
   showPhoneticPopup(word, '查詢中…', event);
@@ -1759,6 +1769,11 @@ function renderNav(){
   document.getElementById('day-nav').innerHTML=pills.join('');
 }
 function renderHeader(){
+  const arts=getArts();
+  if(arts.length===0){
+    document.getElementById('art-header').innerHTML=`<span class="badge">${currentFilter}</span><div class="htitle" style="color:#999;font-weight:400">這個分類目前還沒有文章，敬請期待 🙂</div>`;
+    return;
+  }
   const a=cur();
   const datePart=a.date?`<span style="font-size:11px;color:#888;margin-left:8px">${a.date}</span>`:'';
   const starPart=a.level?`<span style="font-size:13px;margin-left:8px">${'⭐'.repeat(a.level)}</span>`:'';
@@ -1824,7 +1839,21 @@ function renderSentList(){
 function renderPrac(){const zh=sentsZh(),en=sents();document.getElementById('prac-cn').textContent=(zh[pi%zh.length]||'').trim();document.getElementById('prac-ans').style.display='none';document.getElementById('prac-ans').textContent=(en[pi%en.length]||'').trim();}
 function renderAll(){
   buildFilterBar();
-  renderNav();renderHeader();renderVocab();renderListen();renderTranslate();
+  renderNav();renderHeader();
+  if(getArts().length===0){
+    ['vocab-body','listen-body','trans-eng','sent-list','word-list'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.innerHTML='';
+    });
+    document.getElementById('prac-cn').textContent='';
+    document.getElementById('prac-ans').textContent='';
+    document.getElementById('speak-prompt').textContent='Please select a sentence below to start.';
+    document.getElementById('check-prompt').textContent='Select a sentence below first.';
+    document.getElementById('word-check-prompt').innerHTML='<em>Select a word below first.</em>';
+    document.getElementById('score-box').style.display='none';
+    document.getElementById('word-score-box').style.display='none';
+    return;
+  }
+  renderVocab();renderListen();renderTranslate();
   si=0;pi=0;renderSentList();renderPrac();
   document.getElementById('speak-prompt').textContent='Please select a sentence below to start.';
   document.getElementById('check-prompt').textContent='Select a sentence below first.';
@@ -1965,7 +1994,8 @@ function getCatLabel(c){
 }
 
 function buildFilterBar(){
-  const cats=['全部',...new Set(ARTS.map(a=>a.cat).filter(Boolean))];
+  /* 固定顯示全部 6 個標準分類（即使目前沒有文章），而非只顯示已有文章用到的分類 */
+  const cats=['全部',...CAT_LIST];
   const bar=document.getElementById('filter-bar');
   if(!bar) return;
   bar.style.display='flex';
@@ -2030,7 +2060,17 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 function refreshView(){
-  renderNav(); renderHeader(); renderVocab(); renderListen(); renderTranslate();
+  renderNav(); renderHeader();
+  if(getArts().length===0){
+    /* 該分類沒有文章：清空各分頁內容，避免 fallback 顯示其他分類的文章造成混淆 */
+    ['vocab-body','listen-body','trans-eng','sent-list','word-list'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.innerHTML='';
+    });
+    document.getElementById('prac-cn').textContent='';
+    document.getElementById('prac-ans').textContent='';
+    return;
+  }
+  renderVocab(); renderListen(); renderTranslate();
   si=0; pi=0; renderSentList(); renderPrac();
   document.getElementById('speak-prompt').textContent='Please select a sentence below to start.';
   buildQuiz();
