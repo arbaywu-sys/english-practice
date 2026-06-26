@@ -82,17 +82,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* Modal */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-start;justify-content:center;padding:1.5rem 1rem;overflow-y:auto}
 .overlay.show{display:flex}
-.modal{background:white;border-radius:16px;padding:1.5rem;max-width:600px;width:100%;margin:auto}
-.modal h3{font-size:17px;font-weight:600;margin-bottom:.5rem}
-.modal-hint{font-size:13px;color:#888;margin-bottom:1rem;line-height:1.7;background:#f8f8f5;border-radius:8px;padding:10px 12px}
-.modal-hint code{background:#eee;border-radius:4px;padding:1px 5px;font-size:12px;font-family:monospace}
-.paste-area{width:100%;font-family:inherit;font-size:13px;padding:10px 12px;border:0.5px solid #ccc;border-radius:10px;background:#f8f8f5;color:#1a1a1a;resize:vertical;min-height:200px;line-height:1.7}
-.parse-result{background:#f0faf5;border:0.5px solid #97C459;border-radius:10px;padding:1rem;margin-top:1rem;font-size:13px;display:none}
-.parse-row{margin-bottom:6px;display:flex;gap:8px}
-.parse-label{color:#3B6D11;font-weight:600;min-width:72px;font-size:12px;padding-top:1px}
-.parse-val{color:#333;flex:1;font-size:13px}
-.parse-err{background:#fff0f0;border:0.5px solid #E24B4A;border-radius:10px;padding:1rem;margin-top:1rem;font-size:13px;color:#A32D2D;display:none;line-height:1.6}
-.vocab-preview{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+
 .vocab-tag{background:#E6F1FB;color:#0C447C;border-radius:5px;padding:2px 8px;font-size:12px}
 
 /* ── 主題篩選 ── */
@@ -280,6 +270,8 @@ body { font-size: 16px; }
 .admin-btn:hover{opacity:0.8}
 .wspan.clicked{background:#e8e8e4;border-radius:3px;transition:background .3s}
 .phonetic-popup{position:fixed;background:#1a1a1a;color:white;padding:8px 14px;border-radius:10px;font-size:15px;z-index:500;display:none;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.25);pointer-events:none;min-width:100px}
+.app-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:white;padding:10px 18px;border-radius:10px;font-size:14px;z-index:600;box-shadow:0 4px 12px rgba(0,0,0,0.25);pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap}
+.app-toast.show{opacity:1}
 .phonetic-popup.show{display:block}
 .ph-phonetic{color:#aee6ff;font-size:14px;margin-top:2px}
 .ph-loading{color:#aaa;font-size:13px}
@@ -299,35 +291,6 @@ body { font-size: 16px; }
 <body>
 <div class="app">
 
-<!-- 新增文章 Modal -->
-<div class="overlay" id="modal-overlay">
-<div class="modal">
-  <h3>📋 貼上原始素材，自動解析</h3>
-  <div class="modal-hint">
-    把整篇素材直接貼上，程式自動識別：<br>
-    ✦ 標題行中的 <code>星期X</code>、<code>【主題】</code>、標題<br>
-    ✦ <code>🎧 第二段</code> 後的純英文段落<br>
-    ✦ <code>📄 第三段</code> 後的中文翻譯<br>
-    ✦ 第一段中 <code>energy（能量）</code> 格式的括號單字
-  </div>
-  <textarea class="paste-area" id="paste-input" placeholder="把整篇素材貼在這裡..."></textarea>
-  <div class="parse-result" id="parse-result">
-    <div style="font-weight:600;margin-bottom:8px">✅ 解析成功，請確認：</div>
-    <div class="parse-row"><span class="parse-label">日期</span><span class="parse-val" id="pr-day"></span></div>
-    <div class="parse-row"><span class="parse-label">主題</span><span class="parse-val" id="pr-cat"></span></div>
-    <div class="parse-row"><span class="parse-label">標題</span><span class="parse-val" id="pr-title"></span></div>
-    <div class="parse-row"><span class="parse-label">英文段落</span><span class="parse-val" id="pr-eng" style="color:#555;font-size:12px"></span></div>
-    <div class="parse-row"><span class="parse-label">中文翻譯</span><span class="parse-val" id="pr-zh" style="color:#555;font-size:12px"></span></div>
-    <div class="parse-row"><span class="parse-label">單字</span><span class="parse-val"><div class="vocab-preview" id="pr-vocab"></div></span></div>
-  </div>
-  <div class="parse-err" id="parse-err"></div>
-  <div style="display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap">
-    <button class="btn primary" onclick="doParse()">🔍 自動解析</button>
-    <button class="btn success" id="save-btn" onclick="saveArt()" style="display:none">✅ 儲存文章</button>
-    <button class="btn" onclick="closeModal()">取消</button>
-  </div>
-</div>
-</div>
 
 <!-- Banner -->
 <div style="position:relative;width:100%;border-radius:14px;overflow:hidden;margin-bottom:1rem">
@@ -401,7 +364,21 @@ body { font-size: 16px; }
         <select id="voice-select" onchange="setVoiceByIndex(this.value)" style="font-family:inherit;font-size:13px;padding:6px 8px;border:0.5px solid #ccc;border-radius:8px;background:#f8f8f5;color:#1a1a1a;cursor:pointer;width:100%">
           <option value="">載入中...</option>
         </select>
-        <div id="voice-info" style="font-size:12px;color:#888;line-height:1.6"></div>
+        <button onclick="toggleVoiceTip()" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;padding:2px 2px;cursor:pointer;font-family:inherit">
+          <span style="font-size:12px;color:#B06030">💡 想讓發音更自然？看解說</span>
+          <span id="voice-tip-arrow" style="font-size:12px;color:#888;transition:transform 0.2s">▼</span>
+        </button>
+        <div id="voice-tip" style="display:none;font-size:12px;color:#666;line-height:1.9;background:#f8f8f5;border-radius:8px;padding:10px 12px">
+          iPhone預設聲音比較生硬，可以免費升級成更自然的版本，手機進入：<br>
+          設定 → 輔助使用 → 朗讀內容 → 聲音 → English (US)<br>
+          找到聲音名字，點開後選「增強音質」或「高音質」下載（檔案較大）。<br>
+          推薦優先順序（選用）：<br>
+          • Ava（高音質）<br>
+          • Samantha（增強音質）— 跟預設的聲音同一人，音色不變更自然<br>
+          • Zoe（增強音質）<br>
+          • Tom（增強音質，男聲）<br>
+          下載完後回到這裡，上方的聲音選單會自動優先選用品質較好的聲音，不用另外設定。
+        </div>
       </div>
     </div>
     <div class="srow">
@@ -413,9 +390,9 @@ body { font-size: 16px; }
       </div>
     </div>
     <div class="srow">
-      <label>速度</label>
-      <input type="range" min="0.5" max="1.5" step="0.1" value="0.85" id="gspd" oninput="document.getElementById('gspd-val').textContent=parseFloat(this.value).toFixed(1)+'x'">
-      <span class="sval" id="gspd-val">0.9x</span>
+      <label>語速</label>
+      <input type="range" min="0.5" max="1.5" step="0.1" value="0.85" id="gspd" oninput="document.getElementById('gspd-val').textContent=parseFloat(this.value).toFixed(1)+'x（全域適用）'">
+      <span class="sval" id="gspd-val">0.9x（全域適用）</span>
     </div>
   </div>
 </div>
@@ -425,7 +402,7 @@ body { font-size: 16px; }
   <div class="day-nav" id="day-nav"></div>
   <div style="display:flex;gap:6px;flex-wrap:wrap">
     <button class="btn" onclick="loadMore()" id="load-more-btn">⬅ 載入更多</button>
-    <button class="btn" onclick="loadLatest()" title="按此載入最新文章">🔄 刷新文章</button>
+    <button class="btn" onclick="refreshArticles()" title="按此載入最新文章">🔄 刷新文章</button>
   </div>
 </div>
 
@@ -487,6 +464,7 @@ body { font-size: 16px; }
   <div class="card">
     <div class="clabel">🎧 播放時逐字標示（IPA 國際音標 <button onclick="toggleIPA()" style="background:none;border:none;cursor:pointer;font-size:inherit;color:#185FA5;font-family:inherit;padding:0;line-height:1" id="ipa-toggle-btn">說明<span id="ipa-arrow">▼</span></button>）<br>👆 點擊任何單字聆聽發音</div>
     <div style="font-size:12px;color:#aaa;margin-bottom:8px">※ 逐字標示時間因每個使用者的裝置與語音速度不同，可能略有差異</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:8px">💡 這是基礎練習工具，如果數字、年份、專有名詞（例如NASA、2026）可能念法會跟真人不太一樣，可以參考在單字學習頁籤裡的IPA音標。</div>
     <!-- 音標說明折疊 -->
     <div style="margin-bottom:10px">
       <div id="ipa-explain" style="display:none;margin-top:10px;font-size:13px;color:#444;line-height:1.9;background:#f8f8f5;border-radius:10px;padding:12px 14px">
@@ -568,6 +546,7 @@ body { font-size: 16px; }
 <!-- 口說練習 -->
 <div id="p-speak" class="panel">
   <div class="card">
+    <div style="font-size:12px;color:#888;margin-bottom:6px">💡 若語速太快，可以調整上方語速拉桿</div>
     <div class="clabel">🎤 跟讀練習 — 請到下方選擇句子</div>
     <div class="pbox" id="speak-prompt">Please select a sentence below to start.</div>
     <div class="brow">
@@ -682,7 +661,7 @@ const PAGE_SIZE = 7;   /* 每次載入 7 篇 */
 let ARTS=[];
 let ci=0,si=0,pi=0;
 let totalRows=0;
-let loadedRows=0;
+let loadCursor=0; /* 下一批「載入更多」要從哪一列往前抓；loadLatest()載入後會設定，loadMore()每次往前推進 */
 
 /* ── 解析素材（和原本貼上解析相同邏輯） ── */
 function parseRaw(raw){
@@ -706,7 +685,7 @@ function parseRaw(raw){
   const dayM=hLine.match(/星期[一二三四五六日天]/)||(lines.slice(0,10).reduce((f,l)=>f||(l.match(/星期[一二三四五六日天]/)||null),null));
   if(dayM)day=dayM[0];
   const catM=hLine.match(/【([^】]+)】/); if(catM)cat=catM[1];
-  title=hLine.replace(/.*【[^】]*】/,'').replace(/[📱👁️🎧📄✨]/g,'').trim()||hLine.replace(/[📱👁️🎧📄✨]/g,'').trim();
+  title=hLine.replace(/.*【[^】]*】/,'').replace(/[📱👁️🎧📄✨⭐★]/g,'').trim()||hLine.replace(/[📱👁️🎧📄✨⭐★]/g,'').trim();
   let s1=-1,s2=-1,s3=-1;
   lines.forEach((l,i)=>{
     if(s1<0&&/第一段|看意思/.test(l))s1=i;
@@ -777,6 +756,8 @@ async function loadLatest(){
     const parsed = raws.map(parseRaw).filter(Boolean).reverse();
     if(parsed.length){
       ARTS = parsed;
+      /* 記錄目前讀到的邊界列號，loadMore 才能從這裡往前接續、不漏抓也不重複抓 */
+      loadCursor = start;
       /* 按日期排序（新的在前） */
       ARTS.sort((a,b)=>{
         if(a.date&&b.date) return b.date.localeCompare(a.date);
@@ -799,31 +780,48 @@ async function loadLatest(){
 
 /* ── 載入更多（往前翻） ── */
 async function loadMore(){
-  if(loadedRows>=totalRows-1) return; /* 已全部載入 */
+  if(loadCursor<=1) return; /* 已全部載入 */
+  const btn=document.getElementById('load-more-btn');
+  const btnOrigText=btn?btn.textContent:'';
+  if(btn){ btn.disabled=true; btn.textContent='載入中…'; }
   showLoading(true);
   try {
-    const currentEnd = totalRows - loadedRows;
-    const start = Math.max(1, currentEnd - PAGE_SIZE);
-    const raws = await fetchFromSheets(start, PAGE_SIZE);
-    const parsed = raws.map(parseRaw).filter(Boolean).reverse();
-    if(parsed.length){
-      /* 去除重複：只加入標題不重複的文章 */
-      const existingTitles=new Set(ARTS.map(a=>a.title));
-      const newArts=parsed.filter(a=>!existingTitles.has(a.title));
-      if(newArts.length){
-        ARTS = [...ARTS, ...newArts];
-        loadedRows += newArts.length;
-        /* 按日期排序（新的在前） */
-        ARTS.sort((a,b)=>{
-          if(a.date&&b.date) return b.date.localeCompare(a.date);
-          return 0;
-        });
-        saveCache();
-        renderNav();
+    const collected=[]; /* 這次「載入更多」總共抓到的新文章（不分分類） */
+    let matchCount=0;   /* 符合目前篩選分類的篇數 */
+    let rounds=0;
+    const MAX_ROUNDS=30; /* 安全上限：避免某個分類文章太少，一路抓到底耗時太久 */
+    do{
+      if(loadCursor<=1) break;
+      const start = Math.max(1, loadCursor - PAGE_SIZE);
+      const raws = await fetchFromSheets(start, PAGE_SIZE);
+      /* 不管解析/去重結果如何，這個範圍的列都已經從 Sheets 讀過了，要先把進度往前推，否則下次又會抓同一批 */
+      loadCursor = start;
+      rounds++;
+      const parsed = raws.map(parseRaw).filter(Boolean).reverse();
+      if(parsed.length){
+        /* 去除重複：跟既有文章、跟這次已收集到的都要比對 */
+        const existingTitles=new Set([...ARTS.map(a=>a.title), ...collected.map(a=>a.title)]);
+        const newArts=parsed.filter(a=>!existingTitles.has(a.title));
+        collected.push(...newArts);
+        matchCount += newArts.filter(a=>currentFilter==='全部'||a.cat===currentFilter).length;
       }
+      /* 「全部」分類維持原本行為：抓一批就好。有篩選特定分類時，抓到 PAGE_SIZE 篇符合的文章才停止 */
+    } while(currentFilter!=='全部' && matchCount<PAGE_SIZE && loadCursor>1 && rounds<MAX_ROUNDS);
+
+    if(collected.length){
+      ARTS = [...ARTS, ...collected];
+      /* 按日期排序（新的在前） */
+      ARTS.sort((a,b)=>{
+        if(a.date&&b.date) return b.date.localeCompare(a.date);
+        return 0;
+      });
+      saveCache();
+      /* 改用完整渲染，讓畫面自動判斷目前篩選分類下有沒有新文章可顯示，不用手動點日期按鈕 */
+      renderAll();
     }
   } catch(e){ console.log('載入更多失敗',e); }
   showLoading(false);
+  if(btn){ btn.disabled=false; btn.textContent=btnOrigText; }
 }
 
 function saveCache(){
@@ -857,10 +855,30 @@ function showError(msg){
   if(el) el.innerHTML=`<div style="color:#A32D2D;font-size:14px;padding:8px">⚠️ ${msg}</div>`;
 }
 
+/* 小提示訊息，1.5秒後自動消失 */
+function showToast(msg){
+  let el=document.getElementById('app-toast');
+  if(!el){
+    el=document.createElement('div');
+    el.id='app-toast';
+    el.className='app-toast';
+    document.body.appendChild(el);
+  }
+  el.textContent=msg;
+  clearTimeout(el._timer);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  el._timer=setTimeout(()=>el.classList.remove('show'),1500);
+}
+
+/* 「刷新文章」按鈕專用：載入最新文章後跳出提示，跟自動背景載入(startup/admin儲存後)區分開 */
+async function refreshArticles(){
+  await loadLatest();
+  showToast('✅ 已更新到最新文章');
+}
+
 let mediaRec=null,recChunks=[],recBlob=null,micStream=null;
 let recognition=null;
 const qa={};
-let parsedDraft=null;
 
 /* ── 音訊設定 ── */
 let CFG={pitch:1.0, rate:0.85, voiceIdx:-1};
@@ -868,21 +886,48 @@ let _voices=[];
 
 function loadVoices(){
   const all=speechSynthesis.getVoices();
-  _voices=all.filter(v=>v.lang.startsWith('en'));
-  if(!_voices.length) return;
+  /* 口音篩選：教學內容是美式英文，只保留跟教學相關、使用者真的會用到的幾種口音，其他（愛爾蘭、南非等）濾掉避免選單雜亂 */
+  const ALLOWED_LANGS=['en-US','en-GB','en-AU','en-IN'];
+  let voices=all.filter(v=>ALLOWED_LANGS.includes(v.lang));
+  if(!voices.length) return;
+
+  /* 完全沒有任何加強版/Google/Edge自然語音可選時的保底預設，避免靠系統清單順序隨機決定 */
+  const FIXED_DEFAULT={'en-US':'samantha','en-GB':'daniel','en-AU':'karen','en-IN':'rishi'};
+  /* 同一音質層級內，口音的優先順序（美式英文教學內容優先選美式聲音） */
+  const ACCENT_RANK={'en-US':0,'en-GB':1,'en-AU':2,'en-IN':3};
+
+  /* 依「聽起來比較自然」程度打分，分數高的排在選單前面、也優先當預設值 */
+  const qualityScore=v=>{
+    const n=v.name.toLowerCase();
+    if(n.includes('online (natural)')) return 5; /* Edge 的神經網路聲音，目前免費選項裡最自然 */
+    if(n.includes('enhanced')||n.includes('premium')||n.includes('增強')||n.includes('高音質')||n.includes('加強')) return 4; /* 使用者下載的加強版（系統語言可能顯示中文或英文，兩種都判斷） */
+    if(n.includes('google')) return 3; /* Chrome 的 Google 系列，比舊式系統聲音自然 */
+    const fixedName=FIXED_DEFAULT[v.lang];
+    if(fixedName && n.includes(fixedName)) return 2; /* 該口音底下我們指定的保底名單，避免隨機選到清單裡奇怪的聲音 */
+    return 1; /* 其他 */
+  };
+  voices=voices
+    .map((v,origIdx)=>({v,origIdx}))
+    .sort((a,b)=>{
+      const qa=qualityScore(a.v), qb=qualityScore(b.v);
+      if(qa!==qb) return qb-qa;
+      const ra=ACCENT_RANK[a.v.lang]??99, rb=ACCENT_RANK[b.v.lang]??99;
+      if(ra!==rb) return ra-rb;
+      return a.origIdx-b.origIdx; /* 同分時維持原本順序，避免每次重載順序亂跳 */
+    })
+    .map(x=>x.v);
+  _voices=voices;
+
   const sel=document.getElementById('voice-select');
   if(!sel) return;
   sel.innerHTML=_voices.map((v,i)=>{
     const flag=v.lang==='en-US'?'🇺🇸':v.lang==='en-GB'?'🇬🇧':v.lang==='en-AU'?'🇦🇺':v.lang==='en-IN'?'🇮🇳':'🌐';
     return `<option value="${i}">${flag} ${v.name} (${v.lang})</option>`;
   }).join('');
-  /* 預設選第一個 en-US 聲音 */
-  let defIdx=_voices.findIndex(v=>/samantha|karen|zira|moira|tessa/i.test(v.name)&&v.lang==='en-US');
-  if(defIdx<0) defIdx=_voices.findIndex(v=>v.lang==='en-US');
-  if(defIdx<0) defIdx=0;
-  sel.value=defIdx;
-  CFG.voiceIdx=defIdx;
-  updateVoiceInfo(defIdx);
+  /* 排序後排在最前面的就是目前判斷最自然的聲音，當作預設值 */
+  sel.value=0;
+  CFG.voiceIdx=0;
+  updateVoiceInfo(0);
 }
 /* 偵測是否支援語音辨識 */
 (function(){
@@ -928,6 +973,14 @@ function updateVoiceInfo(idx){
   if(el) el.textContent=`目前：${v.name}｜${accent}`;
 }
 
+function toggleVoiceTip(){
+  const tip=document.getElementById('voice-tip');
+  const arrow=document.getElementById('voice-tip-arrow');
+  const open=tip.style.display==='none';
+  tip.style.display=open?'block':'none';
+  arrow.style.transform=open?'rotate(180deg)':'rotate(0)';
+}
+
 function setPitch(val,btn){
   CFG.pitch=val;
   document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('on'));
@@ -935,7 +988,7 @@ function setPitch(val,btn){
 }
 document.getElementById('gspd').addEventListener('input',function(){
   CFG.rate=parseFloat(this.value);
-  document.getElementById('gspd-val').textContent=CFG.rate.toFixed(1)+'x';
+  document.getElementById('gspd-val').textContent=CFG.rate.toFixed(1)+'x（全域適用）';
 });
 
 /* ══════════════════════════════════════════
@@ -1026,11 +1079,26 @@ function playHL(){
   let p=0;
   words.forEach(w=>{ wordStarts.push(p); p+=w.length+1; });
 
+  /* 依句尾標點(.!?)切段，段落交界處插入停頓，模擬真人說話的呼吸節奏；
+     文字內容本身沒有被改寫，只是分次播放，所以跳格子用的字元位置對照不受影響 */
+  const SENT_PAUSE_MS=450;
+  const segEnds=(()=>{
+    const re=/[^.!?]+[.!?]+/g;
+    const ends=[]; let m;
+    while((m=re.exec(text))) ends.push(re.lastIndex);
+    if(!ends.length || ends[ends.length-1]<text.length) ends.push(text.length);
+    return ends;
+  })();
+
   let hlTimer=null;
   let boundaryFired=false;
   let timerWi=0;
+  let segPauseTimer=null;
 
-  function clearTimer(){ if(hlTimer){clearTimeout(hlTimer);hlTimer=null;} }
+  function clearTimer(){
+    if(hlTimer){clearTimeout(hlTimer);hlTimer=null;}
+    if(segPauseTimer){clearTimeout(segPauseTimer);segPauseTimer=null;}
+  }
   window._clearHL=clearTimer;
 
   const run=(fromChar)=>{
@@ -1038,9 +1106,21 @@ function playHL(){
     boundaryFired=false;
     st.textContent='逐字標示中…';
 
+    /* 找出這次要播到哪一句結尾為止（只播一段，不是整段直接播完） */
+    let segEnd=text.length;
+    for(let i=0;i<segEnds.length;i++){
+      if(segEnds[i]>fromChar){ segEnd=segEnds[i]; break; }
+    }
+    const isLastSeg=segEnd>=text.length;
+
     let startWord=0;
     for(let i=0;i<wordStarts.length;i++){
       if(wordStarts[i]>=fromChar){startWord=i;break;}
+    }
+    /* 定時器備援只能跑到這一段的結尾，不能跑到下一段（避免在停頓的空檔搶跑） */
+    let segEndWord=words.length;
+    for(let i=startWord;i<wordStarts.length;i++){
+      if(wordStarts[i]>=segEnd){segEndWord=i;break;}
     }
     timerWi=startWord;
 
@@ -1049,7 +1129,7 @@ function playHL(){
     const effectiveCPS=BASE_CPS*CFG.rate;
     function timerTick(){
       if(boundaryFired) return;
-      if(timerWi>=words.length){ clearTimer(); return; }
+      if(timerWi>=segEndWord){ clearTimer(); return; }
       clearLit();
       const el=document.getElementById('lw'+timerWi);
       if(el){ el.classList.add('lit'); el.scrollIntoView({block:'nearest',behavior:'smooth'}); }
@@ -1062,7 +1142,7 @@ function playHL(){
     const fallbackTimer=setTimeout(()=>{ if(!boundaryFired) timerTick(); }, 500);
 
     speechSynthesis.cancel();
-    const snippet=fromChar>0?text.slice(fromChar):text;
+    const snippet=text.slice(fromChar, segEnd);
     const u=new SpeechSynthesisUtterance(snippet);
     u.lang='en-US'; u.rate=CFG.rate; u.pitch=CFG.pitch;
     const v=getVoice(); if(v)u.voice=v;
@@ -1075,7 +1155,7 @@ function playHL(){
         clearTimer();
         clearTimeout(fallbackTimer);
       }
-      const absChar=(fromChar||0)+e.charIndex;
+      const absChar=fromChar+e.charIndex;
       let wi=startWord;
       for(let i=startWord;i<wordStarts.length;i++){
         if(wordStarts[i]<=absChar) wi=i;
@@ -1087,14 +1167,20 @@ function playHL(){
     };
     u.onend=()=>{
       if(cancelled)return;
-      clearTimer(); clearTimeout(fallbackTimer); clearLit();
+      clearTimer(); clearTimeout(fallbackTimer);
       /* 學習實際語速：總字元數 / 實際秒數 */
       if(!boundaryFired && _trackState){
         const elapsed=(Date.now()-_trackState.startTime)/1000;
         if(elapsed>0.5) window._learnedCPS=Math.round(snippet.length/elapsed);
       }
-      PS=null; _trackState=null; resetPauseBtns();
-      st.textContent='播放完畢 ✓';
+      if(isLastSeg){
+        clearLit();
+        PS=null; _trackState=null; resetPauseBtns();
+        st.textContent='播放完畢 ✓';
+      } else {
+        /* 這一句念完了，停頓一下再接下一句 */
+        segPauseTimer=setTimeout(()=>{ run(segEnd); }, SENT_PAUSE_MS);
+      }
     };
     u._cancel=()=>{ cancelled=true; clearTimer(); clearTimeout(fallbackTimer); };
     _trackState={text,rate:CFG.rate,fromChar:fromChar||0,startTime:Date.now(),resumeFn:null};
@@ -1403,7 +1489,7 @@ document.addEventListener('click',()=>{
   if(w) w.classList.remove('show');
 });
 
-function speakWord(w){ if(w&&w.dataset) w=w.dataset.w; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(w); u.lang='en-US'; u.rate=0.8; u.pitch=CFG.pitch; const v=getVoice(); if(v)u.voice=v; speechSynthesis.speak(u); }
+function speakWord(w){ if(w&&w.dataset) w=w.dataset.w; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(w); u.lang='en-US'; u.rate=CFG.rate; u.pitch=CFG.pitch; const v=getVoice(); if(v)u.voice=v; speechSynthesis.speak(u); }
 
 /* ── 浮動播放控制 ── */
 let _fcMode = ''; /* 'vocab', 'listen', 'translate' */
@@ -1666,90 +1752,6 @@ function sents(){return cur().eng.match(/[^.!?]+[.!?]+/g)||[cur().eng];}
 function sentsZh(){return cur().zh.match(/[^。！？]+[。！？]+/g)||[cur().zh];}
 
 /* ── Parse ── */
-function doParse(){
-  const raw=document.getElementById('paste-input').value;
-  document.getElementById('parse-result').style.display='none';
-  document.getElementById('parse-err').style.display='none';
-  document.getElementById('save-btn').style.display='none';
-  parsedDraft=null;
-  if(!raw.trim()){showErr('請先貼上素材內容');return;}
-  const lines=raw.split('\n');
-  let day='',cat='',title='';
-  const hLine=lines.find(l=>/【[^】]+】/.test(l)&&!/第一段|第二段|第三段/.test(l))||lines[0];
-  /* 星期幾：掃全部前10行 */
-  const dayM=lines.slice(0,10).reduce((found,l)=>found||(l.match(/星期[一二三四五六日天]/)||null),null);
-  if(dayM) day=dayM[0];
-  /* 日期：掃前10行 */
-  const dateRawLine=lines.slice(0,10).find(l=>/\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(l));
-  const dateM=dateRawLine&&dateRawLine.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/);
-  const dateVal=dateM?dateM[1].replace(/-/g,'/'):'';
-  /* 難易度：掃前10行，數星星數量 */
-  const levelLine=lines.slice(0,10).find(l=>/[⭐★]/.test(l));
-  const levelVal=levelLine?(levelLine.match(/[⭐★]/g)||[]).length:0;
-  const catM=hLine.match(/【([^】]+)】/); if(catM)cat=catM[1];
-  title=hLine.replace(/.*【[^】]*】/,'').replace(/[📱👁️🎧📄✨]/g,'').replace(/[（(][^）)（(]{1,30}[）)]/g,'').trim()||hLine.replace(/[📱👁️🎧📄✨]/g,'').trim();
-  let s1=-1,s2=-1,s3=-1;
-  lines.forEach((l,i)=>{
-    if(s1<0&&/第一段|看意思/.test(l))s1=i;
-    if(s2<0&&/第二段|聽發音/.test(l))s2=i;
-    if(s3<0&&/第三段|對翻譯|中文語意/.test(l))s3=i;
-  });
-  if(s2<0||s3<0){
-    lines.forEach((l,i)=>{ if(s3<0&&i>0&&/[\u4e00-\u9fff]{10,}/.test(l)&&!/[a-zA-Z]{5,}/.test(l))s3=i; });
-    if(s2<0){ const from=s1>=0?s1+1:1,to=s3>=0?s3:lines.length; for(let i=from;i<to;i++){const l=lines[i];if(/[a-zA-Z]{4,}/.test(l)&&!/[\u4e00-\u9fff]/.test(l)&&l.trim().length>20){s2=i;break;}} }
-  }
-  function extractBlock(start,end){ if(start<0)return''; return lines.slice(start+1,end>0?end:lines.length).filter(l=>l.trim()&&!/^[📱👁️🎧📄✨]/.test(l.trim())).join(' ').trim(); }
-  const seg1=extractBlock(s1,s2>0?s2:s3),seg2=extractBlock(s2,s3),seg3=extractBlock(s3,lines.length);
-  let engPara=seg2.trim()||(seg1?seg1.replace(/[（(][^）)]{1,20}[）)]/g,'').replace(/\s+/g,' ').trim():'');
-  engPara=engPara.replace(/\n/g,' ').replace(/\s+/g,' ').trim();
-  const zhPara=seg3.trim();
-  const vocab=[];
-  if(seg1){const re=/([A-Za-z]{2,})[（(]([^）)]{1,30})[）)]/g;let m;while((m=re.exec(seg1))!==null){const en=m[1].trim(),zh=m[2].trim();if(!/^\d+$/.test(en)&&!vocab.find(v=>v.en===en))vocab.push({en,zh});}}
-  if(!engPara){showErr('⚠ 找不到英文段落。請確認素材有「🎧 第二段」。');return;}
-  if(!zhPara){showErr('⚠ 找不到中文翻譯。請確認素材有「📄 第三段」。');return;}
-  parsedDraft={day:day||'未命名',cat:cat||'英文練習',title:title||'每日練習',eng:engPara,zh:zhPara,vocab,date:dateVal||'',level:levelVal||0};
-  document.getElementById('pr-day').textContent=parsedDraft.day;
-  document.getElementById('pr-cat').textContent=parsedDraft.cat;
-  document.getElementById('pr-title').textContent=parsedDraft.title;
-  document.getElementById('pr-eng').textContent=parsedDraft.eng.slice(0,120)+(parsedDraft.eng.length>120?'…':'');
-  document.getElementById('pr-zh').textContent=parsedDraft.zh.slice(0,80)+(parsedDraft.zh.length>80?'…':'');
-  const vp=document.getElementById('pr-vocab');
-  vp.innerHTML=parsedDraft.vocab.length?parsedDraft.vocab.map(v=>`<span class="vocab-tag">${v.en} ${v.zh}</span>`).join(''):'<span style="color:#aaa;font-size:12px">未偵測到括號單字</span>';
-  document.getElementById('parse-result').style.display='block';
-  document.getElementById('save-btn').style.display='inline-flex';
-}
-function showErr(msg){const el=document.getElementById('parse-err');el.textContent=msg;el.style.display='block';}
-async function saveArt(){
-  if(!parsedDraft)return;
-  const btn=document.getElementById('save-btn');
-  btn.textContent='儲存中…'; btn.disabled=true;
-  try {
-    const raw=document.getElementById('paste-input').value.trim();
-    const res=await fetch(APPS_SCRIPT_URL, {
-      method:'POST',
-      body: JSON.stringify({raw}),
-    });
-    const json=await res.json();
-    if(json.success){
-      /* 本地也先加入，不用等重新整理 */
-      ARTS.unshift(parsedDraft);
-      ci=0;
-      saveCache();
-      closeModal();
-      renderAll();
-      /* 背景同步最新資料 */
-      setTimeout(()=>loadLatest(), 1500);
-    } else {
-      alert('儲存失敗：'+( json.error||'未知錯誤'));
-    }
-  } catch(e){
-    alert('連線失敗，請確認網路或 Apps Script 設定：'+e.message);
-  }
-  btn.textContent='✅ 儲存文章'; btn.disabled=false;
-}
-function openModal(){document.getElementById('modal-overlay').classList.add('show');document.getElementById('paste-input').value='';document.getElementById('parse-result').style.display='none';document.getElementById('parse-err').style.display='none';document.getElementById('save-btn').style.display='none';parsedDraft=null;}
-function closeModal(){document.getElementById('modal-overlay').classList.remove('show');}
-document.getElementById('modal-overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
 
 /* ── Render ── */
 function renderNav(){
@@ -2263,11 +2265,15 @@ async function adminLoadMore(){
   const status=document.getElementById('admin-load-more-status');
   const before=ARTS.length;
   btn.disabled=true; btn.textContent='載入中…';
+  /* 後台管理要的是「固定抓一批7篇原始資料」，不要被前台目前的分類篩選影響抓取批數，所以暫時切到「全部」再還原 */
+  const savedFilter=currentFilter;
+  currentFilter='全部';
   await loadMore(); /* 共用前台同一套載入邏輯，確保資料一致、不重複維護兩套程式 */
+  currentFilter=savedFilter;
   buildArtList(); /* 重新渲染管理列表，把新載入的文章一起顯示出來 */
   const added=ARTS.length-before;
   btn.disabled=false; btn.textContent='⬇ 載入更多舊文章（每次 7 篇）';
-  if(loadedRows>=totalRows-1){
+  if(loadCursor<=1){
     status.textContent=`已載入全部 ${ARTS.length} 篇文章`;
     btn.style.display='none';
   } else {
@@ -2316,10 +2322,22 @@ async function saveEdit(i){
   ARTS[i].eng=document.getElementById('edit-eng-'+i).value.trim();
   ARTS[i].zh=document.getElementById('edit-zh-'+i).value.trim();
   saveCache(); renderAll(); buildArtList();
-  /* 同步更新 Sheets：把整個素材重建後上傳 */
+  /* 同步更新 Sheets：把整個素材重建後上傳
+     重要：第一段必須把 vocab（單字學習用的「英文(中文)」標註）還原回英文段落裡，
+     否則 parseRaw 重新解析時抓不到單字，會導致該篇文章的單字學習功能消失 */
   try{
     const a=ARTS[i];
-    const raw=`${a.date||''}\n${a.day}【${a.cat}】${a.title}\n👁️ 第一段：看意思用\n${a.eng}\n🎧 第二段：聽發音用\n${a.eng}\n📄 第三段：對翻譯用\n${a.zh}`;
+    let seg1=a.eng;
+    (a.vocab||[]).forEach(v=>{
+      if(seg1.includes(`${v.en}(${v.zh})`) || seg1.includes(`${v.en}（${v.zh}）`)) return; /* 已經有標註就不重複加 */
+      const re=new RegExp(`\\b${v.en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'i');
+      if(re.test(seg1)){
+        seg1=seg1.replace(re, `${v.en}(${v.zh})`);
+      } else {
+        seg1+=` ${v.en}(${v.zh})`;
+      }
+    });
+    const raw=`${a.date||''}\n${a.day}【${a.cat}】${a.title}\n${a.level?'⭐'.repeat(a.level)+'\n':''}👁️ 第一段：看意思用\n${seg1}\n🎧 第二段：聽發音用\n${a.eng}\n📄 第三段：對翻譯用\n${a.zh}`;
     await fetch(APPS_SCRIPT_URL,{
       method:'POST',
       body:JSON.stringify({action:'update', pwd:_adminPwd, title:oldTitle, raw})
