@@ -279,6 +279,14 @@ body { font-size: 16px; }
 .copyright{text-align:center;font-size:12px;color:#bbb;padding:16px 0 8px;letter-spacing:0.5px}
 /* ── 品牌標注 ── */
 .brand-bar{text-align:center;font-size:12px;color:#bbb;padding:6px 0;letter-spacing:0.5px;border-bottom:0.5px solid #eee;margin-bottom:8px}
+/* ── Kokoro 下載 Modal ── */
+.kokoro-modal{background:white;border-radius:16px;padding:1.5rem;max-width:400px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+.kokoro-modal h3{font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a1a}
+.kokoro-modal p{font-size:13px;color:#555;line-height:1.8;margin-bottom:12px}
+.kokoro-progress{height:6px;background:#e8e8e4;border-radius:3px;overflow:hidden;margin:12px 0}
+.kokoro-progress-bar{height:100%;background:#185FA5;border-radius:3px;width:0%;transition:width .3s}
+.kokoro-status{font-size:12px;color:#888;text-align:center;min-height:18px}
+
 /* 強制保持左對齊，避免嵌入第三方網站時被外部 CSS 覆蓋 */
 .clabel,.pbox,#vocab-body,#trans-eng,#listen-body,.eng,.sz,.htitle,
 .qq,.qo,#designer-note,#designer-note p,#designer-note div,
@@ -345,7 +353,7 @@ body { font-size: 16px; }
       <div style="font-size:13px;font-weight:600;color:#3a2010;margin-bottom:8px">找到適合你的文章：</div>
       <div style="font-size:13px;color:#5a3820;line-height:2">
         📅 日期 — 每天更新，累積收藏；點日期或「載入更多」可回顧過去文章<br>
-        ⭐ 難易度 — 三顆星約國三程度，一顆星最簡單，六顆星最挑戰<br>
+        ⭐ 難易度 — 一顆星約小五、六，二顆星約國一、二，三顆星約國三程度，依此遞增，六顆星最挑戰<br>
         🏷 分類 — 科技、環境、生活…按主題挑選你有興趣的文章
       </div>
     </div>
@@ -364,20 +372,12 @@ body { font-size: 16px; }
         <select id="voice-select" onchange="setVoiceByIndex(this.value)" style="font-family:inherit;font-size:13px;padding:6px 8px;border:0.5px solid #ccc;border-radius:8px;background:#f8f8f5;color:#1a1a1a;cursor:pointer;width:100%">
           <option value="">載入中...</option>
         </select>
-        <button onclick="toggleVoiceTip()" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;padding:2px 2px;cursor:pointer;font-family:inherit">
-          <span style="font-size:12px;color:#B06030">💡 想讓發音更自然？看解說</span>
+        <button onclick="toggleVoiceTip()" style="display:inline-flex;align-items:center;gap:4px;background:none;border:none;padding:2px 2px;cursor:pointer;font-family:inherit">
+          <span style="font-size:12px;color:#B06030">💡 想聽不同聲音？</span>
           <span id="voice-tip-arrow" style="font-size:12px;color:#888;transition:transform 0.2s">▼</span>
         </button>
         <div id="voice-tip" style="display:none;font-size:12px;color:#666;line-height:1.9;background:#f8f8f5;border-radius:8px;padding:10px 12px">
-          iPhone預設聲音比較生硬，可以免費升級成更自然的版本，手機進入：<br>
-          設定 → 輔助使用 → 朗讀內容 → 聲音 → English (US)<br>
-          找到聲音名字，點開後選「增強音質」或「高音質」下載（檔案較大）。<br>
-          推薦優先順序（選用）：<br>
-          • Ava（高音質）<br>
-          • Samantha（增強音質）— 跟預設的聲音同一人，音色不變更自然<br>
-          • Zoe（增強音質）<br>
-          • Tom（增強音質，男聲）<br>
-          下載完後回到這裡，上方的聲音選單會自動優先選用品質較好的聲音，不用另外設定。
+          到「聲音」選單試聽幾個選項，我們已經自動把品質較好的選項排在前面。桌機版的Chrome使用神經網路語音，聽起來更像真人發音。
         </div>
       </div>
     </div>
@@ -462,9 +462,12 @@ body { font-size: 16px; }
 <!-- 聽力練習 -->
 <div id="p-listen" class="panel">
   <div class="card">
-    <div class="clabel">🎧 播放時逐字標示（IPA 國際音標 <button onclick="toggleIPA()" style="background:none;border:none;cursor:pointer;font-size:inherit;color:#185FA5;font-family:inherit;padding:0;line-height:1" id="ipa-toggle-btn">說明<span id="ipa-arrow">▼</span></button>）<br>👆 點擊任何單字聆聽發音</div>
-    <div style="font-size:12px;color:#aaa;margin-bottom:8px">※ 逐字標示時間因每個使用者的裝置與語音速度不同，可能略有差異</div>
-    <div style="font-size:12px;color:#aaa;margin-bottom:8px">💡 這是基礎練習工具，如果數字、年份、專有名詞（例如NASA、2026）可能念法會跟真人不太一樣，可以參考在單字學習頁籤裡的IPA音標。</div>
+    <div class="clabel">🎧 播放時逐字標示（IPA 國際音標 <button onclick="toggleIPA()" style="background:none;border:none;cursor:pointer;font-size:inherit;color:#185FA5;font-family:inherit;padding:0;line-height:1" id="ipa-toggle-btn">說明<span id="ipa-arrow">▼</span></button>）<br>👆 點擊任何單字聆聽發音 <button onclick="toggleRuleNote()" style="background:none;border:none;cursor:pointer;font-size:inherit;color:#185FA5;font-family:inherit;padding:0;line-height:1" id="rule-note-toggle-btn">規則說明<span id="rule-note-arrow">▼</span></button></div>
+    <div id="rule-note" style="display:none;margin-bottom:8px">
+      <div style="display:flex;align-items:flex-start;gap:6px;font-size:12px;color:#aaa;margin-bottom:6px"><span style="display:inline-block;width:20px;text-align:center;flex-shrink:0">※</span><span>逐字標示時間因每個使用者的裝置與語音速度不同，可能略有差異</span></div>
+      <div style="display:flex;align-items:flex-start;gap:6px;font-size:12px;color:#aaa;margin-bottom:6px"><span style="display:inline-block;width:20px;text-align:center;flex-shrink:0">💡</span><span>若語速太快，可以調整上方語速拉桿</span></div>
+      <div style="display:flex;align-items:flex-start;gap:6px;font-size:12px;color:#aaa"><span style="display:inline-block;width:20px;text-align:center;flex-shrink:0">🎗️</span><span>這是基礎練習工具，如果數字、年份、專有名詞（例如NASA、2026）可能念法會跟真人不太一樣，可以參考在單字學習頁籤裡的IPA音標。</span></div>
+    </div>
     <!-- 音標說明折疊 -->
     <div style="margin-bottom:10px">
       <div id="ipa-explain" style="display:none;margin-top:10px;font-size:13px;color:#444;line-height:1.9;background:#f8f8f5;border-radius:10px;padding:12px 14px">
@@ -677,21 +680,26 @@ function parseRaw(raw){
     const stars=(l.match(/⭐|★/g)||[]).length;
     if(stars>0) level=Math.min(stars,6);
   }
-  /* 找標題行：含【主題】的行，或含盲盒/每日的行 */
+  /* 找標題行：含【主題】的行，或含盲盒/每日的行，再退而求其次 */
   const hLine=lines.find(l=>/【[^】]+】/.test(l)&&!/第一段|第二段|第三段/.test(l))
     || lines.find(l=>/盲盒|每日/.test(l))
     || lines.find(l=>l.trim().length>0&&!/^\d{4}/.test(l.trim())&&!/^[👁🎧📄📱✨]/.test(l.trim()));
   /* 星期幾：hLine 找不到就掃全部前10行 */
-  const dayM=hLine.match(/星期[一二三四五六日天]/)||(lines.slice(0,10).reduce((f,l)=>f||(l.match(/星期[一二三四五六日天]/)||null),null));
+  const dayM=hLine
+    ? (hLine.match(/星期[一二三四五六日天]/)||(lines.slice(0,10).reduce((f,l)=>f||(l.match(/星期[一二三四五六日天]/)||null),null)))
+    : (lines.slice(0,10).reduce((f,l)=>f||(l.match(/星期[一二三四五六日天]/)||null),null));
   if(dayM)day=dayM[0];
-  const catM=hLine.match(/【([^】]+)】/); if(catM)cat=catM[1];
-  title=hLine.replace(/.*【[^】]*】/,'').replace(/[📱👁️🎧📄✨⭐★]/g,'').trim()||hLine.replace(/[📱👁️🎧📄✨⭐★]/g,'').trim();
+  if(hLine){
+    const catM=hLine.match(/【([^】]+)】/); if(catM)cat=catM[1];
+    title=hLine.replace(/.*【[^】]*】/,'').replace(/[📱👁️🎧📄✨⭐★]/g,'').trim()||hLine.replace(/[📱👁️🎧📄✨⭐★]/g,'').trim();
+  }
   let s1=-1,s2=-1,s3=-1;
   lines.forEach((l,i)=>{
     if(s1<0&&/第一段|看意思/.test(l))s1=i;
     if(s2<0&&/第二段|聽發音/.test(l))s2=i;
     if(s3<0&&/第三段|對翻譯|中文語意/.test(l))s3=i;
   });
+  /* 找不到標記時退而求其次猜（相容舊格式文章） */
   if(s2<0||s3<0){
     lines.forEach((l,i)=>{ if(s3<0&&i>0&&/[\u4e00-\u9fff]{10,}/.test(l)&&!/[a-zA-Z]{5,}/.test(l))s3=i; });
     if(s2<0){ const from=s1>=0?s1+1:1,to=s3>=0?s3:lines.length; for(let i=from;i<to;i++){const l=lines[i];if(/[a-zA-Z]{4,}/.test(l)&&!/[\u4e00-\u9fff]/.test(l)&&l.trim().length>20){s2=i;break;}} }
@@ -705,6 +713,57 @@ function parseRaw(raw){
   if(seg1){const re=/([A-Za-z]{2,})[（(]([^）)]{1,30})[）)]/g;let m;while((m=re.exec(seg1))!==null){const en=m[1].trim(),zh=m[2].trim();if(!/^\d+$/.test(en)&&!vocab.find(v=>v.en===en))vocab.push({en,zh});}}
   if(!engPara||!zhPara) return null;
   return {day:day||'未命名',cat:cat||'英文練習',title:title||'每日練習',date:date||'',level:level||0,eng:engPara,zh:zhPara,vocab};
+}
+
+/* 嚴格版解析：只在後台「新增文章」時使用，不猜、不退路，格式不對就回傳null讓防呆機制擋住 */
+function parseRawStrict(raw){
+  if(!raw||!raw.trim()) return null;
+  const lines=raw.split('\n');
+  let day='',cat='',title='',date='';
+  let level=0;
+  for(const l of lines){
+    const dateM=l.match(/(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
+    if(dateM){ date=dateM[1].replace(/-/g,'/'); }
+    const stars=(l.match(/⭐|★/g)||[]).length;
+    if(stars>0) level=Math.min(stars,6);
+  }
+  /* 標題行：必須含【主題】才算，不退而求其次 */
+  const hLine=lines.find(l=>/【[^】]+】/.test(l)&&!/第一段|第二段|第三段/.test(l));
+  const dayM=hLine
+    ? (hLine.match(/星期[一二三四五六日天]/)||(lines.slice(0,10).reduce((f,l)=>f||(l.match(/星期[一二三四五六日天]/)||null),null)))
+    : (lines.slice(0,10).reduce((f,l)=>f||(l.match(/星期[一二三四五六日天]/)||null),null));
+  if(dayM)day=dayM[0];
+  if(hLine){
+    const catM=hLine.match(/【([^】]+)】/); if(catM)cat=catM[1];
+    title=hLine.replace(/.*【[^】]*】/,'').replace(/[📱👁️🎧📄✨⭐★]/g,'').trim();
+  }
+  /* 三段標記：必須明確有標記才算，不猜 */
+  let s1=-1,s2=-1,s3=-1;
+  lines.forEach((l,i)=>{
+    if(s1<0&&/第一段|看意思/.test(l))s1=i;
+    if(s2<0&&/第二段|聽發音/.test(l))s2=i;
+    if(s3<0&&/第三段|對翻譯|中文語意/.test(l))s3=i;
+  });
+  function extractBlock(start,end){ if(start<0)return''; return lines.slice(start+1,end>0?end:lines.length).filter(l=>l.trim()&&!/^[📱👁️🎧📄✨]/.test(l.trim())).join(' ').trim(); }
+  const seg1=extractBlock(s1,s2>0?s2:s3);
+  const seg2=s2>=0?extractBlock(s2,s3):''; /* 沒有🎧標記就是空的，不猜 */
+  const seg3=s3>=0?extractBlock(s3,lines.length):''; /* 沒有📄標記就是空的，不猜 */
+  let engPara=seg2.trim();
+  engPara=engPara.replace(/\n/g,' ').replace(/\s+/g,' ').trim();
+  const zhPara=seg3.trim();
+  /* 單字：括號內必須含中文字才收入，避免「英文（英文）」錯誤配對 */
+  const vocab=[];
+  if(seg1){
+    const re=/([A-Za-z]{2,})[（(]([^）)]{1,30})[）)]/g;
+    let m;
+    while((m=re.exec(seg1))!==null){
+      const en=m[1].trim(),zh=m[2].trim();
+      const hasChinese=/[\u4e00-\u9fff]/.test(zh);
+      if(hasChinese&&!/^\d+$/.test(en)&&!vocab.find(v=>v.en===en)) vocab.push({en,zh});
+    }
+  }
+  if(!engPara||!zhPara) return null;
+  return {day:day||'未命名',cat:cat||'',title:title||'',date:date||'',level:level||0,eng:engPara,zh:zhPara,vocab};
 }
 
 /* ── CSV 完整解析（處理儲存格內換行） ── */
@@ -886,33 +945,52 @@ let _voices=[];
 
 function loadVoices(){
   const all=speechSynthesis.getVoices();
-  /* 口音篩選：教學內容是美式英文，只保留跟教學相關、使用者真的會用到的幾種口音，其他（愛爾蘭、南非等）濾掉避免選單雜亂 */
+  /* 口音篩選：教學內容是美式英文，只保留跟教學相關、使用者真的會用到的幾種口音，其他（愛爾蘭、南非、奈及利亞等）濾掉避免選單雜亂
+     Android的lang格式用底線（en_US），標準格式是連字號（en-US）；比對時先替換讓兩種格式都能對到白名單 */
   const ALLOWED_LANGS=['en-US','en-GB','en-AU','en-IN'];
-  let voices=all.filter(v=>ALLOWED_LANGS.includes(v.lang));
+  /* Android的lang格式用底線（en_US），標準格式是連字號（en-US）；normLang統一轉換，讓所有比對都能正常運作 */
+  const normLang=lang=>lang.replace(/_/g,'-');
+  let voices=all.filter(v=>ALLOWED_LANGS.includes(normLang(v.lang)));
+  /* 排除系統內建的「特殊音效聲音」(Novelty Voices)跟音質公認偏差的舊式聲音，這些不是正常閱讀聲音 */
+  const NOVELTY_NAMES=['albert','bad news','bahh','bells','boing','bubbles','cellos','deranged','eddy','flo','fred','good news','grandma','grandpa','hysterical','jester','junior','kathy','organ','pipe organ','ralph','reed','rocko','sandy','shelley','superstar','trinoids','vicki','whisper','wobble','zarvox'];
+  voices=voices.filter(v=>{
+    const n=v.name.toLowerCase().trim();
+    return !NOVELTY_NAMES.some(nv=>n===nv||n.startsWith(nv+' ')||n.startsWith(nv+'('));
+  });
   if(!voices.length) return;
 
-  /* 完全沒有任何加強版/Google/Edge自然語音可選時的保底預設，避免靠系統清單順序隨機決定 */
-  const FIXED_DEFAULT={'en-US':'samantha','en-GB':'daniel','en-AU':'karen','en-IN':'rishi'};
+  /* 去重複：某些裝置(例如舊款iPad)系統本身回傳的清單，同一個「名字+語言」組合會出現兩次以上，
+     只留第一個出現的，避免選單裡同一個聲音重複顯示 */
+  {
+    const seen=new Set();
+    voices=voices.filter(v=>{
+      const key=v.name.toLowerCase().trim()+'|'+normLang(v.lang);
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   /* 同一音質層級內，口音的優先順序（美式英文教學內容優先選美式聲音） */
   const ACCENT_RANK={'en-US':0,'en-GB':1,'en-AU':2,'en-IN':3};
+  /* 美式英文裡，這幾個經查證使用者社群評價較好的聲音，排序優先於其他美式聲音（包含Samantha） */
+  const US_PREFERRED=['evan','nathan','zoe'];
 
-  /* 依「聽起來比較自然」程度打分，分數高的排在選單前面、也優先當預設值 */
-  const qualityScore=v=>{
-    const n=v.name.toLowerCase();
-    if(n.includes('online (natural)')) return 5; /* Edge 的神經網路聲音，目前免費選項裡最自然 */
-    if(n.includes('enhanced')||n.includes('premium')||n.includes('增強')||n.includes('高音質')||n.includes('加強')) return 4; /* 使用者下載的加強版（系統語言可能顯示中文或英文，兩種都判斷） */
-    if(n.includes('google')) return 3; /* Chrome 的 Google 系列，比舊式系統聲音自然 */
-    const fixedName=FIXED_DEFAULT[v.lang];
-    if(fixedName && n.includes(fixedName)) return 2; /* 該口音底下我們指定的保底名單，避免隨機選到清單裡奇怪的聲音 */
-    return 1; /* 其他 */
-  };
+  /* 品質排序改用瀏覽器標準屬性 localService 判斷，不用猜名字：
+     localService===false 代表這個聲音是連網路、用伺服器算出來的（通常是神經網路類型，比手機本機算的自然），優先排前面；
+     這個屬性不分平台、不會因為廠商改名字就失效，比之前用關鍵字猜名字更穩固 */
   voices=voices
     .map((v,origIdx)=>({v,origIdx}))
     .sort((a,b)=>{
-      const qa=qualityScore(a.v), qb=qualityScore(b.v);
-      if(qa!==qb) return qb-qa;
-      const ra=ACCENT_RANK[a.v.lang]??99, rb=ACCENT_RANK[b.v.lang]??99;
+      const sa=a.v.localService?1:0, sb=b.v.localService?1:0;
+      if(sa!==sb) return sa-sb; /* localService=false(連網路) 排前面 */
+      const ra=ACCENT_RANK[normLang(a.v.lang)]??99, rb=ACCENT_RANK[normLang(b.v.lang)]??99;
       if(ra!==rb) return ra-rb;
+      if(normLang(a.v.lang)==='en-US'){
+        const pa=US_PREFERRED.includes(a.v.name.toLowerCase().trim())?0:1;
+        const pb=US_PREFERRED.includes(b.v.name.toLowerCase().trim())?0:1;
+        if(pa!==pb) return pa-pb;
+      }
       return a.origIdx-b.origIdx; /* 同分時維持原本順序，避免每次重載順序亂跳 */
     })
     .map(x=>x.v);
@@ -920,14 +998,39 @@ function loadVoices(){
 
   const sel=document.getElementById('voice-select');
   if(!sel) return;
-  sel.innerHTML=_voices.map((v,i)=>{
-    const flag=v.lang==='en-US'?'🇺🇸':v.lang==='en-GB'?'🇬🇧':v.lang==='en-AU'?'🇦🇺':v.lang==='en-IN'?'🇮🇳':'🌐';
-    return `<option value="${i}">${flag} ${v.name} (${v.lang})</option>`;
-  }).join('');
+
+  /* Kokoro 音色清單（放在選單最前面，value 用 "kokoro:音色ID" 標記） */
+  const KOKORO_VOICES=[
+    {id:'af_heart',  label:'Heart（美式女聲）'},
+    {id:'af_bella',  label:'Bella（美式女聲）'},
+    {id:'af_nicole', label:'Nicole（美式女聲）'},
+    {id:'am_adam',   label:'Adam（美式男聲）'},
+    {id:'bf_emma',   label:'Emma（英式女聲）'},
+    {id:'bm_george', label:'George（英式男聲）'},
+  ];
+  const kokoroLoaded=window._kokoroTTS!==undefined;
+  const kokoroGroup=`<optgroup label="── AI 真人語音（Kokoro）──">`
+    + KOKORO_VOICES.map(k=>`<option value="kokoro:${k.id}">🤖 ${k.label}${kokoroLoaded?'':' ▸ 點此下載'}</option>`).join('')
+    + `</optgroup>`;
+
+  const sysGroup=`<optgroup label="── 預設語音 ──">`
+    + _voices.map((v,i)=>{
+        const flag=normLang(v.lang)==='en-US'?'🇺🇸':normLang(v.lang)==='en-GB'?'🇬🇧':normLang(v.lang)==='en-AU'?'🇦🇺':normLang(v.lang)==='en-IN'?'🇮🇳':'🌐';
+        return `<option value="${i}">${flag} ${v.name} (${v.lang})</option>`;
+      }).join('')
+    + `</optgroup>`;
+
+  sel.innerHTML=kokoroGroup+sysGroup;
   /* 排序後排在最前面的就是目前判斷最自然的聲音，當作預設值 */
   sel.value=0;
   CFG.voiceIdx=0;
-  updateVoiceInfo(0);
+  /* 但「預設播放值」跟「選單顯示順序」分開處理：如果裝置上有Samantha，固定指定她當預設，
+     不管排序結果把誰排在前面——Samantha是最普遍、最穩定一定會有的選項，排序只是方便使用者自己手動發現更好的選項 */
+  const samanthaIdx=_voices.findIndex(v=>normLang(v.lang)==='en-US'&&v.name.toLowerCase().trim()==='samantha');
+  if(samanthaIdx>=0){
+    sel.value=samanthaIdx;
+    CFG.voiceIdx=samanthaIdx;
+  }
 }
 /* 偵測是否支援語音辨識 */
 (function(){
@@ -950,27 +1053,45 @@ setTimeout(loadVoices,500);
 setTimeout(loadVoices,1000);
 setTimeout(loadVoices,2000);
 
+/* 「想聽不同聲音？」展開內容依裝置顯示不同說明：Android可以直接換系統TTS引擎拿到更好的聲音，
+   跟iOS/桌機（排序已經自動處理好，使用者只要去選單試聽）的情況不一樣，分開講才不會混亂 */
+(function initVoiceTipContent(){
+  const tip=document.getElementById('voice-tip');
+  if(!tip) return;
+  const isAndroid=/Android/i.test(navigator.userAgent);
+  tip.innerHTML=isAndroid
+    ? '如果想要更自然的聲音，可以到手機「設定→語言與輸入→文字轉語音輸出」，安裝並切換成別的語音引擎App（例如開源的Piper、Supertonic等），裝好後重新整理本頁，新的聲音就會出現在上方選單裡。'
+    : '到「聲音」選單試聽幾個選項，我們已經自動把品質較好的選項排在前面。桌機版的Chrome使用神經網路語音，聽起來更像真人發音。<br><br>想要更接近真人的 AI 語音？選單上方的「AI 真人語音（Kokoro）」系列，首次選取時會引導你下載 Kokoro 開源模型（約 90MB），下載後即可使用，之後不需重新下載。';
+})();
+
 function getVoice(){
   if(CFG.voiceIdx>=0 && _voices[CFG.voiceIdx]) return _voices[CFG.voiceIdx];
-  return _voices.find(v=>v.lang==='en-US')||_voices[0]||null;
+  const normLang=lang=>lang.replace(/_/g,'-');
+  return _voices.find(v=>normLang(v.lang)==='en-US')||_voices[0]||null;
 }
 
 function setVoiceByIndex(val){
+  /* 選到 Kokoro 音色 */
+  if(typeof val==='string' && val.startsWith('kokoro:')){
+    CFG.voiceIdx='kokoro';
+    CFG.kokoroVoiceId=val.replace('kokoro:','');
+    if(!window._kokoroTTS){
+      /* 模型尚未下載，跳出引導 Modal */
+      openKokoroModal();
+    } else {
+      /* 已下載，直接播放測試音 */
+      kokoroSpeak('Hello, this is Kokoro AI voice.');
+    }
+    return;
+  }
+  /* 一般系統語音 */
   CFG.voiceIdx=parseInt(val);
-  updateVoiceInfo(CFG.voiceIdx);
+  CFG.kokoroVoiceId=null;
   const u=new SpeechSynthesisUtterance('Hello, this is a test.');
   u.lang='en-US'; u.rate=CFG.rate; u.pitch=CFG.pitch;
   if(_voices[CFG.voiceIdx]) u.voice=_voices[CFG.voiceIdx];
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
-}
-
-function updateVoiceInfo(idx){
-  const v=_voices[idx];
-  if(!v) return;
-  const accent=v.lang==='en-US'?'美式英文 🇺🇸':v.lang==='en-GB'?'英式英文 🇬🇧':v.lang==='en-AU'?'澳洲英文 🇦🇺':v.lang==='en-IN'?'印度英文 🇮🇳':v.lang;
-  const el=document.getElementById('voice-info');
-  if(el) el.textContent=`目前：${v.name}｜${accent}`;
 }
 
 function toggleVoiceTip(){
@@ -1080,9 +1201,15 @@ function playHL(){
   words.forEach(w=>{ wordStarts.push(p); p+=w.length+1; });
 
   /* 依句尾標點(.!?)切段，段落交界處插入停頓，模擬真人說話的呼吸節奏；
-     文字內容本身沒有被改寫，只是分次播放，所以跳格子用的字元位置對照不受影響 */
-  const SENT_PAUSE_MS=450;
-  const segEnds=(()=>{
+     文字內容本身沒有被改寫，只是分次播放，所以跳格子用的字元位置對照不受影響。
+     但網路語音（localService===false，例如Chrome的Google系列）每次重新建立utterance都要重新連線，
+     分段會造成每句開頭卡頓，所以網路語音不分段，整段一次播完，只有本機語音才用分段+停頓 */
+  const SENT_PAUSE_MS=500;
+  const curVoice=getVoice();
+  /* Kokoro 在瀏覽器本機運算，沒有網路延遲，歸類為「可分段」；
+     系統語音則依 localService 屬性判斷 */
+  const isNetworkVoice=CFG.voiceIdx==='kokoro' ? false : (curVoice && curVoice.localService===false);
+  const segEnds=isNetworkVoice ? [text.length] : (()=>{
     const re=/[^.!?]+[.!?]+/g;
     const ends=[]; let m;
     while((m=re.exec(text))) ends.push(re.lastIndex);
@@ -1091,19 +1218,19 @@ function playHL(){
   })();
 
   let hlTimer=null;
-  let boundaryFired=false;
+  let watchdogTimer=null;
   let timerWi=0;
   let segPauseTimer=null;
 
   function clearTimer(){
     if(hlTimer){clearTimeout(hlTimer);hlTimer=null;}
+    if(watchdogTimer){clearTimeout(watchdogTimer);watchdogTimer=null;}
     if(segPauseTimer){clearTimeout(segPauseTimer);segPauseTimer=null;}
   }
   window._clearHL=clearTimer;
 
   const run=(fromChar)=>{
     clearLit(); clearTimer();
-    boundaryFired=false;
     st.textContent='逐字標示中…';
 
     /* 找出這次要播到哪一句結尾為止（只播一段，不是整段直接播完） */
@@ -1123,23 +1250,32 @@ function playHL(){
       if(wordStarts[i]>=segEnd){segEndWord=i;break;}
     }
     timerWi=startWord;
+    let maxWi=startWord-1; /* 目前已經到達過的最遠字索引，避免延遲送達的事件把畫面往回拉 */
+    let anyBoundaryFired=false; /* 這一段有沒有收到過任何一次真實同步事件，onend時用來判斷要不要學習語速 */
 
     /* 定時器備用方案：用動態校正語速 */
     const BASE_CPS=window._learnedCPS||17.4; /* Google線上語音較快，預設22字元/秒 */
     const effectiveCPS=BASE_CPS*CFG.rate;
     function timerTick(){
-      if(boundaryFired) return;
-      if(timerWi>=segEndWord){ clearTimer(); return; }
+      if(timerWi>=segEndWord){ if(hlTimer){clearTimeout(hlTimer);hlTimer=null;} return; }
       clearLit();
       const el=document.getElementById('lw'+timerWi);
       if(el){ el.classList.add('lit'); el.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+      if(timerWi>maxWi) maxWi=timerWi; /* 定時器推進的位置也要記錄，否則之後的事件比較基準會不準確 */
       const dur=Math.max(120, Math.round((words[timerWi].length+1)/effectiveCPS*1000));
       timerWi++;
       hlTimer=setTimeout(timerTick, dur);
     }
 
-    /* 500ms 內若 onboundary 沒觸發，啟動定時器備援 */
-    const fallbackTimer=setTimeout(()=>{ if(!boundaryFired) timerTick(); }, 500);
+    /* 持續監控：每次收到真實同步事件就重新計時；如果超過0.7秒沒收到新事件（不管是一開始就沒有，
+       還是中途斷掉），就啟動定時器備援接手繼續推進，不會卡死在最後收到事件的位置不動 */
+    function resetWatchdog(){
+      if(watchdogTimer) clearTimeout(watchdogTimer);
+      watchdogTimer=setTimeout(()=>{
+        if(!hlTimer) timerTick();
+      }, 700);
+    }
+    resetWatchdog();
 
     speechSynthesis.cancel();
     const snippet=text.slice(fromChar, segEnd);
@@ -1150,26 +1286,29 @@ function playHL(){
     let cancelled=false;
     u.onboundary=e=>{
       if(e.name!=='word') return;
-      if(!boundaryFired){
-        boundaryFired=true;
-        clearTimer();
-        clearTimeout(fallbackTimer);
-      }
+      anyBoundaryFired=true;
+      if(hlTimer){clearTimeout(hlTimer);hlTimer=null;} /* 真實事件來了，收回定時器備援，改用真實位置 */
       const absChar=fromChar+e.charIndex;
       let wi=startWord;
       for(let i=startWord;i<wordStarts.length;i++){
         if(wordStarts[i]<=absChar) wi=i;
         else break;
       }
-      clearLit();
-      const el=document.getElementById('lw'+wi);
-      if(el){ el.classList.add('lit'); el.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+      /* 只有比目前已到達的最遠位置更靠前才採用，避免延遲送達的舊事件把畫面拉回去 */
+      if(wi>maxWi){
+        maxWi=wi;
+        timerWi=wi+1; /* 萬一之後又斷掉，備援要從下一個字接著跳，不是卡在原地重複跳同一格 */
+        clearLit();
+        const el=document.getElementById('lw'+wi);
+        if(el){ el.classList.add('lit'); el.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+      }
+      resetWatchdog(); /* 不管位置有沒有被採用，事件有送達就代表連線還活著，重新倒數監控 */
     };
     u.onend=()=>{
       if(cancelled)return;
-      clearTimer(); clearTimeout(fallbackTimer);
-      /* 學習實際語速：總字元數 / 實際秒數 */
-      if(!boundaryFired && _trackState){
+      clearTimer();
+      /* 學習實際語速：總字元數 / 實際秒數（這一段完全沒收到任何真實同步事件時才需要學習） */
+      if(!anyBoundaryFired && _trackState){
         const elapsed=(Date.now()-_trackState.startTime)/1000;
         if(elapsed>0.5) window._learnedCPS=Math.round(snippet.length/elapsed);
       }
@@ -1182,7 +1321,7 @@ function playHL(){
         segPauseTimer=setTimeout(()=>{ run(segEnd); }, SENT_PAUSE_MS);
       }
     };
-    u._cancel=()=>{ cancelled=true; clearTimer(); clearTimeout(fallbackTimer); };
+    u._cancel=()=>{ cancelled=true; clearTimer(); };
     _trackState={text,rate:CFG.rate,fromChar:fromChar||0,startTime:Date.now(),resumeFn:null};
     _trackState.resumeFn=(fc)=>{ clearTimer(); run(fc); };
     window._activeU=u;
@@ -1404,12 +1543,6 @@ const TRANS_LS_KEY='eng_trans_cache';
 function saveTransCache(){
   try{localStorage.setItem(TRANS_LS_KEY,JSON.stringify(_transCache));}catch(e){}
 }
-function savePhonCache(){}
-
-async function loadAllCaches(){
-  /* 同時載入翻譯快取和音標快取 */
-  await Promise.allSettled([loadAllTranslations(), loadAllPhonetics()]);
-}
 
 async function loadAllTranslations(){
   try{
@@ -1489,7 +1622,18 @@ document.addEventListener('click',()=>{
   if(w) w.classList.remove('show');
 });
 
-function speakWord(w){ if(w&&w.dataset) w=w.dataset.w; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(w); u.lang='en-US'; u.rate=CFG.rate; u.pitch=CFG.pitch; const v=getVoice(); if(v)u.voice=v; speechSynthesis.speak(u); }
+function speakWord(w){
+  if(w&&w.dataset) w=w.dataset.w;
+  if(CFG.voiceIdx==='kokoro' && window._kokoroTTS){
+    window.kokoroSpeak(w);
+    return;
+  }
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(w);
+  u.lang='en-US'; u.rate=CFG.rate; u.pitch=CFG.pitch;
+  const v=getVoice(); if(v)u.voice=v;
+  speechSynthesis.speak(u);
+}
 
 /* ── 浮動播放控制 ── */
 let _fcMode = ''; /* 'vocab', 'listen', 'translate' */
@@ -1658,6 +1802,14 @@ function toggleIPA(){
   arrow.textContent=open?'▲':'▼';
 }
 
+function toggleRuleNote(){
+  const el=document.getElementById('rule-note');
+  const arrow=document.getElementById('rule-note-arrow');
+  const open=el.style.display==='none';
+  el.style.display=open?'block':'none';
+  arrow.textContent=open?'▲':'▼';
+}
+
 function toggleScoreInfo(){
   const el=document.getElementById('score-info');
   const arrow=document.getElementById('score-arrow');
@@ -1745,9 +1897,6 @@ function showScore(target,said){
 function save(){ saveCache(); } /* 文章從 Sheets 讀取，本地只存快取 */
 function cur(){const arts=getArts();return arts[ci]||arts[0]||ARTS[0];}
 function clearLit(){document.querySelectorAll('.wspan').forEach(e=>e.classList.remove('lit'));}
-function listenWordClick(el, word){
-  speakWord(word);
-}
 function sents(){return cur().eng.match(/[^.!?]+[.!?]+/g)||[cur().eng];}
 function sentsZh(){return cur().zh.match(/[^。！？]+[。！？]+/g)||[cur().zh];}
 
@@ -1979,7 +2128,6 @@ document.addEventListener('visibilitychange', ()=>{
 });
 function playRec(){if(recBlob)new Audio(URL.createObjectURL(recBlob)).play();}
 function sw(name,el){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.getElementById('p-'+name).classList.add('on');el.classList.add('on');stopAll();if(['vocab','listen','translate'].includes(name))showFloatCtrl(name);else hideFloatCtrl();}
-function delArt(){ alert('請到 Google Sheets 刪除對應列，程式會在下次開啟時自動更新。'); }
 /* ══════════════════════════════════════
    主題 + 難易度 篩選系統
    ══════════════════════════════════════ */
@@ -2173,32 +2321,87 @@ function swAdmin(name,el){
 }
 
 /* ── 新增文章 ── */
+function toggleAdminExplain(){
+  const box=document.getElementById('admin-explain-box');
+  const arrow=document.getElementById('admin-explain-arrow');
+  const open=box.style.display==='none';
+  box.style.display=open?'block':'none';
+  arrow.textContent=open?'▲':'▼';
+}
+
 function adminParse(){
   const raw=document.getElementById('admin-paste').value.trim();
-  /* 每次都可以重新解析，不需要先重置 */
   document.getElementById('admin-parse-result').style.display='none';
   document.getElementById('admin-parse-err').style.display='none';
   document.getElementById('admin-save-btn').style.display='none';
+  document.getElementById('admin-cannot-save').style.display='none';
+  document.getElementById('admin-explain-btn').style.display='none';
+  document.getElementById('admin-explain-box').style.display='none';
+  document.getElementById('admin-explain-box').innerHTML='';
   document.getElementById('admin-reset-btn').style.display='none';
   adminDraft=null;
   if(!raw){showAdminErr('請先貼上素材');return;}
-  const parsed=parseRaw(raw);
-  if(!parsed){showAdminErr('解析失敗，請確認素材包含第二段和第三段');return;}
+  const parsed=parseRawStrict(raw);
+  if(!parsed){showAdminErr('解析失敗，請確認素材包含🎧第二段（英文）和📄第三段（中文翻譯）');return;}
   adminDraft={...parsed,_raw:raw};
-  document.getElementById('apr-day').innerHTML=`<b>日期：</b>${parsed.date||'（未填）'}｜<b>星期：</b>${parsed.day||'（未填）'}｜<b>難易度：</b>${parsed.level?'⭐'.repeat(parsed.level):'（未填）'}`;
-  document.getElementById('apr-title').innerHTML=`<b>標題：</b>${parsed.title}`;
-  /* 分類確認下拉選單：自動比對標準清單，沒對到就停在「請選擇」逼管理員手動確認 */
-  const catMatch=CAT_LIST.includes(parsed.cat) ? parsed.cat : '';
+
+  /* ── 逐欄位驗證，收集所有問題 ── */
+  const errors=[];
+
+  const dateOK=!!parsed.date;
+  if(!dateOK) errors.push('⚠️ 未偵測到日期，格式需為 YYYY/MM/DD（例：2026/06/29），請確認年份完整且放在第一行');
+
+  const levelOK=parsed.level>0;
+  if(!levelOK) errors.push('⚠️ 未偵測到難易度，請在第一行加上 ⭐（1~6顆），例：⭐⭐⭐');
+
+  const catMatch=CAT_LIST.includes(parsed.cat)?parsed.cat:'';
+  if(!catMatch) errors.push('⚠️ 未偵測到分類，請用【】括住分類名稱，例：【生活科學】');
+
+  const titleOK=!!parsed.title&&parsed.title!=='每日練習'&&parsed.title!=='英文練習';
+  if(!titleOK) errors.push('⚠️ 未偵測到標題，請確認【分類】後方有標題文字，例：【生活科學】為什麼影片停不下來？');
+
+  const engOK=!!parsed.eng&&parsed.eng.length>=20;
+  if(!engOK) errors.push('⚠️ 未偵測到英文段落，請確認素材中有🎧第二段標記，且標記下方有純英文內容（不含中文）');
+
+  const zhOK=!!parsed.zh&&parsed.zh.length>=10;
+  if(!zhOK) errors.push('⚠️ 未偵測到中文段落，請確認素材中有📄第三段標記，且標記下方有純中文翻譯內容');
+
+  const vocabOK=parsed.vocab&&parsed.vocab.length>0;
+  if(!vocabOK) errors.push('⚠️ 第一段未偵測到單字注釋，請確認格式為「英文（中文）」，例：teenagers（青少年）。括號內需為中文解釋，不能是英文');
+
+  /* ── 顯示解析結果 ── */
+  document.getElementById('apr-day').innerHTML=`<b>日期：</b>${dateOK?`<span style="color:#27500A">${parsed.date}</span>`:'<span style="color:#A32D2D">⚠️ 未偵測到</span>'}｜<b>星期：</b>${parsed.day||'（未填）'}｜<b>難易度：</b>${levelOK?'⭐'.repeat(parsed.level):'<span style="color:#A32D2D">⚠️ 未偵測到</span>'}`;
+  document.getElementById('apr-title').innerHTML=`<b>標題：</b>${titleOK?`<span style="color:#27500A">${parsed.title}</span>`:'<span style="color:#A32D2D">⚠️ 未偵測到</span>'}`;
   document.getElementById('apr-cat-wrap').innerHTML=`<b>主題：</b><select id="apr-cat-select" onchange="onAprCatChange(this.value)" style="font-family:inherit;font-size:13px;padding:3px 6px;border-radius:6px;border:0.5px solid #ccc">
     <option value="" ${catMatch?'':'selected'}>⚠️ 請選擇分類（原文：${parsed.cat||'空白'}）</option>
     ${CAT_LIST.map(c=>`<option value="${c}" ${c===catMatch?'selected':''}>${c}</option>`).join('')}
   </select>`;
-  document.getElementById('apr-eng').innerHTML=`<b>英文：</b>${parsed.eng.slice(0,80)}…`;
-  document.getElementById('apr-vocab').innerHTML=parsed.vocab.map(v=>`<span class="vocab-tag">${v.en} ${v.zh}</span>`).join('');
+  document.getElementById('apr-eng').innerHTML=`<b>英文：</b>${engOK?`<span style="color:#555">${parsed.eng.slice(0,80)}…</span>`:'<span style="color:#A32D2D">⚠️ 未偵測到</span>'}`;
+  document.getElementById('apr-vocab').innerHTML=vocabOK
+    ? parsed.vocab.map(v=>`<span class="vocab-tag">${v.en} ${v.zh}</span>`).join('')
+    : '<span style="color:#A32D2D;font-size:12px">⚠️ 未偵測到單字注釋</span>';
   document.getElementById('admin-parse-result').style.display='block';
-  /* 分類未確認時不給存檔，避免髒資料流入 Sheets */
-  document.getElementById('admin-save-btn').style.display=catMatch?'inline-flex':'none';
   document.getElementById('admin-reset-btn').style.display='inline-flex';
+
+  /* ── 根據驗證結果決定顯示存檔按鈕還是「無法儲存+點我解說」 ── */
+  const allOK=errors.length===0 && catMatch;
+  if(allOK){
+    document.getElementById('admin-save-btn').style.display='inline-flex';
+    document.getElementById('admin-cannot-save').style.display='none';
+    document.getElementById('admin-explain-btn').style.display='none';
+  } else {
+    document.getElementById('admin-save-btn').style.display='none';
+    document.getElementById('admin-cannot-save').style.display='inline';
+    document.getElementById('admin-explain-btn').style.display='inline';
+    /* 收集所有問題（含分類未選的提示） */
+    const allErrors=[...errors];
+    if(!catMatch) {
+      /* 分類問題已在errors裡，只是需要額外提示要從下拉選單選 */
+      if(!errors.some(e=>e.includes('分類')))
+        allErrors.push('⚠️ 請從「主題」下拉選單選擇正確的分類');
+    }
+    document.getElementById('admin-explain-box').innerHTML=allErrors.join('<br><br>');
+  }
 }
 
 /* 標準分類清單已移至檔案前段（與 CAT_SHORT 放在一起集中管理） */
@@ -2206,9 +2409,18 @@ function adminParse(){
 function onAprCatChange(newCat){
   if(!adminDraft)return;
   adminDraft.cat=newCat;
-  /* 同步改寫 _raw 文字裡的【主題】，確保存檔送出的素材跟畫面上選的分類一致 */
   adminDraft._raw=adminDraft._raw.replace(/【[^】]*】/,`【${newCat}】`);
-  document.getElementById('admin-save-btn').style.display=newCat?'inline-flex':'none';
+  /* 選了分類後重新檢查：只有全部欄位都OK才開放存檔 */
+  const dateOK=!!adminDraft.date;
+  const levelOK=adminDraft.level>0;
+  const titleOK=!!adminDraft.title&&adminDraft.title!=='每日練習'&&adminDraft.title!=='英文練習';
+  const engOK=!!adminDraft.eng&&adminDraft.eng.length>=20;
+  const zhOK=!!adminDraft.zh&&adminDraft.zh.length>=10;
+  const vocabOK=adminDraft.vocab&&adminDraft.vocab.length>0;
+  const allOK=newCat&&dateOK&&levelOK&&titleOK&&engOK&&zhOK&&vocabOK;
+  document.getElementById('admin-save-btn').style.display=allOK?'inline-flex':'none';
+  document.getElementById('admin-cannot-save').style.display=allOK?'none':'inline';
+  document.getElementById('admin-explain-btn').style.display=allOK?'none':'inline';
 }
 
 function adminReset(){
@@ -2488,6 +2700,144 @@ if(document.readyState==='complete'||document.readyState==='interactive'){
 showFloatCtrl('vocab');
 </script>
 
+<script type="module">
+/* ══════════════════════════════════════════
+   Kokoro TTS 整合
+   ══════════════════════════════════════════ */
+
+/* kokoro-js 從 jsDelivr CDN 載入（暫時）
+   正式上線前請將模型備份至 GitHub Releases，並更新 MODEL_ID */
+import { KokoroTTS } from 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.mjs';
+const MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX'; /* 暫用 HuggingFace，備份完成後換成自己的 GitHub Releases URL */
+
+let _kokoroLoading = false;
+let _kokoroAborted = false;
+
+/* ── Modal 控制 ── */
+window.openKokoroModal = function(){
+  const overlay = document.getElementById('kokoro-dl-overlay');
+  const startBtn = document.getElementById('kokoro-start-btn');
+  const cancelBtn = document.getElementById('kokoro-cancel-btn');
+  const status = document.getElementById('kokoro-status');
+  const bar = document.getElementById('kokoro-prog-bar');
+  if(!overlay) return;
+  bar.style.width = '0%';
+  status.textContent = '準備好了嗎？點「開始下載」即可開始。';
+  startBtn.style.display = 'inline-flex';
+  cancelBtn.textContent = '取消';
+  overlay.classList.add('show');
+};
+
+window.kokoroCancelDownload = function(){
+  _kokoroAborted = true;
+  document.getElementById('kokoro-dl-overlay').classList.remove('show');
+  /* 如果下載中途取消，把選單切回第一個系統語音 */
+  if(!window._kokoroTTS){
+    const sel = document.getElementById('voice-select');
+    if(sel){
+      /* 找第一個非 kokoro 的 option */
+      const first = [...sel.options].find(o => !o.value.startsWith('kokoro:'));
+      if(first){
+        sel.value = first.value;
+        CFG.voiceIdx = parseInt(first.value);
+        CFG.kokoroVoiceId = null;
+      }
+    }
+  }
+};
+
+window.kokoroStartDownload = async function(){
+  if(_kokoroLoading) return;
+  _kokoroLoading = true;
+  _kokoroAborted = false;
+
+  const startBtn = document.getElementById('kokoro-start-btn');
+  const cancelBtn = document.getElementById('kokoro-cancel-btn');
+  const status = document.getElementById('kokoro-status');
+  const bar = document.getElementById('kokoro-prog-bar');
+
+  startBtn.style.display = 'none';
+  cancelBtn.textContent = '取消下載';
+  status.textContent = '連線中，請稍候…';
+
+  try{
+    const tts = await KokoroTTS.from_pretrained(MODEL_ID, {
+      dtype: 'q4',   /* q4 約 90MB，速度與品質平衡 */
+      device: 'wasm', /* wasm 相容性最廣，含 iOS Safari；有 WebGPU 的裝置自動走較快路徑 */
+      progress_callback: (info) => {
+        if(_kokoroAborted) return;
+        if(info.status === 'downloading'){
+          const pct = info.total > 0 ? Math.round((info.loaded / info.total) * 100) : 0;
+          bar.style.width = pct + '%';
+          const mb = (info.loaded / 1024 / 1024).toFixed(1);
+          const total = (info.total / 1024 / 1024).toFixed(0);
+          status.textContent = `下載中… ${mb} / ${total} MB（${pct}%）`;
+        } else if(info.status === 'ready'){
+          bar.style.width = '100%';
+          status.textContent = '載入模型中…';
+        }
+      }
+    });
+
+    if(_kokoroAborted){ _kokoroLoading=false; return; }
+
+    window._kokoroTTS = tts;
+    _kokoroLoading = false;
+
+    /* 下載完成：更新選單顯示（移除「▸ 點此下載」提示）*/
+    const sel = document.getElementById('voice-select');
+    if(sel){
+      [...sel.options].forEach(o=>{
+        if(o.value.startsWith('kokoro:')) o.text = o.text.replace(' ▸ 點此下載','');
+      });
+    }
+
+    status.textContent = '✅ 下載完成！';
+    cancelBtn.textContent = '關閉';
+    setTimeout(()=>{
+      document.getElementById('kokoro-dl-overlay').classList.remove('show');
+      /* 播放一段測試音讓使用者確認聲音正常 */
+      kokoroSpeak('Hello! This is Kokoro AI voice.');
+    }, 800);
+
+  } catch(err){
+    _kokoroLoading = false;
+    if(_kokoroAborted) return;
+    status.textContent = '❌ 下載失敗，請檢查網路後再試。';
+    startBtn.style.display = 'inline-flex';
+    startBtn.textContent = '重試';
+    cancelBtn.textContent = '關閉';
+    console.error('Kokoro 下載失敗：', err);
+  }
+};
+
+/* ── Kokoro 播放函式（供 speakWord、playFull、playHL 呼叫） ── */
+window.kokoroSpeak = async function(text){
+  if(!window._kokoroTTS) return;
+  try{
+    const audio = await window._kokoroTTS.generate(text, {
+      voice: CFG.kokoroVoiceId || 'af_heart',
+      speed: CFG.rate,
+    });
+    /* 把 Kokoro 生成的 Float32Array 轉成 AudioBuffer 播放 */
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const samples = audio.audio;
+    const buf = ctx.createBuffer(1, samples.length, audio.sampling_rate);
+    buf.copyToChannel(samples, 0);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start();
+    return new Promise(resolve => { src.onended = resolve; });
+  } catch(e){
+    console.error('Kokoro 播放失敗：', e);
+  }
+};
+
+/* ── 掛載到 window，供非 module script 的 speakWord 判斷使用 ── */
+window._kokoroTTS = undefined; /* 初始化為 undefined（下載前）*/
+</script>
+
 <!-- 版權聲明 -->
 <div class="copyright">© 2026 <a href="https://www.excursioninsole.com.tw/" target="_blank" style="color:inherit;text-decoration:underline">遠足客製鞋墊</a> 版權所有</div>
 
@@ -2533,11 +2883,14 @@ showFloatCtrl('vocab');
         <div id="apr-vocab" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px"></div>
       </div>
       <div id="admin-parse-err" style="display:none;background:#fff0f0;border:0.5px solid #E24B4A;border-radius:10px;padding:10px;font-size:13px;color:#A32D2D;margin-bottom:10px"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn primary" onclick="adminParse()">🔍 自動解析</button>
         <button class="btn" id="admin-save-btn" onclick="adminSave()" style="display:none;background:#EAF3DE;color:#27500A;border-color:#97C459">✅ 儲存文章</button>
+        <span id="admin-cannot-save" style="display:none;color:#aaa;font-size:13px">？ 無法儲存</span>
+        <button id="admin-explain-btn" onclick="toggleAdminExplain()" style="display:none;background:none;border:none;cursor:pointer;font-size:13px;color:#185FA5;font-family:inherit;padding:0">→ 點我解說 <span id="admin-explain-arrow">▼</span></button>
         <button class="btn" id="admin-reset-btn" onclick="adminReset()" style="display:none">↺ 重新輸入</button>
       </div>
+      <div id="admin-explain-box" style="display:none;margin-top:8px;background:#fff8f0;border:0.5px solid #E8A87C;border-radius:10px;padding:10px 14px;font-size:12px;color:#5a3820;line-height:2"></div>
     </div>
 
     <!-- 管理文章 -->
