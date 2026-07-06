@@ -1013,7 +1013,7 @@ function loadVoices(){
   window.renderVoiceSelect=function(){
     const s=document.getElementById('voice-select');
     if(!s) return;
-    const kokoroReady=window._kokoroTTS && window._kokoroTTS!==undefined;
+    const kokoroReady=!!window._kokoroTTS;
     const kokoroGroup=kokoroReady
       ? `<optgroup label="── AI 真人語音（Kokoro）──">`
           + window._kokoroVoices.map(k=>`<option value="kokoro:${k.id}">🤖 ${k.label}</option>`).join('')
@@ -1088,8 +1088,7 @@ function setVoiceByIndex(val){
   if(typeof val==='string' && val.startsWith('kokoro:')){
     if(val==='kokoro:download' || !window._kokoroTTS){
       /* 尚未下載，跳出引導 Modal；不改變目前播放聲音 */
-      if(typeof openKokoroModal==='function') openKokoroModal();
-      else window._pendingKokoroModal=true;
+      openKokoroModal();
       return;
     }
     /* 已下載，切換音色 */
@@ -1639,7 +1638,7 @@ document.addEventListener('click',()=>{
 function speakWord(w){
   if(w&&w.dataset) w=w.dataset.w;
   if(CFG.voiceIdx==='kokoro' && window._kokoroTTS){
-    window.kokoroSpeak(w);
+    kokoroSpeak(w);
     return;
   }
   speechSynthesis.cancel();
@@ -2714,21 +2713,17 @@ if(document.readyState==='complete'||document.readyState==='interactive'){
 showFloatCtrl('vocab');
 </script>
 
-<script type="module">
+<script>
 /* ══════════════════════════════════════════
-   Kokoro TTS 整合
+   Kokoro TTS 整合（函式殼定義在主 script，確保頁面載入時即存在）
    ══════════════════════════════════════════ */
 
-/* kokoro-js 從 jsDelivr CDN 載入（暫時）
-   正式上線前請將模型備份至 GitHub Releases，並更新 MODEL_ID */
-import { KokoroTTS } from 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.mjs';
-const MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX'; /* 暫用 HuggingFace，備份完成後換成自己的 GitHub Releases URL */
-
-let _kokoroLoading = false;
-let _kokoroAborted = false;
+window._kokoroTTS = null;      /* null = 未下載；載入後為 KokoroTTS 實例 */
+window._kokoroLoading = false;
+window._kokoroAborted = false;
 
 /* ── Modal 控制 ── */
-window.openKokoroModal = function(){
+function openKokoroModal(){
   const overlay = document.getElementById('kokoro-dl-overlay');
   const startBtn = document.getElementById('kokoro-start-btn');
   const cancelBtn = document.getElementById('kokoro-cancel-btn');
@@ -2738,32 +2733,27 @@ window.openKokoroModal = function(){
   bar.style.width = '0%';
   status.textContent = '準備好了嗎？點「開始下載」即可開始。';
   startBtn.style.display = 'inline-flex';
+  startBtn.textContent = '開始下載';
   cancelBtn.textContent = '取消';
   overlay.classList.add('show');
-};
+}
 
-window.kokoroCancelDownload = function(){
-  _kokoroAborted = true;
+function kokoroCancelDownload(){
+  window._kokoroAborted = true;
   document.getElementById('kokoro-dl-overlay').classList.remove('show');
-  /* 如果下載中途取消，把選單切回第一個系統語音 */
   if(!window._kokoroTTS){
     const sel = document.getElementById('voice-select');
     if(sel){
-      /* 找第一個非 kokoro 的 option */
       const first = [...sel.options].find(o => !o.value.startsWith('kokoro:'));
-      if(first){
-        sel.value = first.value;
-        CFG.voiceIdx = parseInt(first.value);
-        CFG.kokoroVoiceId = null;
-      }
+      if(first){ sel.value = first.value; CFG.voiceIdx = parseInt(first.value); CFG.kokoroVoiceId = null; }
     }
   }
-};
+}
 
-window.kokoroStartDownload = async function(){
-  if(_kokoroLoading) return;
-  _kokoroLoading = true;
-  _kokoroAborted = false;
+async function kokoroStartDownload(){
+  if(window._kokoroLoading) return;
+  window._kokoroLoading = true;
+  window._kokoroAborted = false;
 
   const startBtn = document.getElementById('kokoro-start-btn');
   const cancelBtn = document.getElementById('kokoro-cancel-btn');
@@ -2775,11 +2765,14 @@ window.kokoroStartDownload = async function(){
   status.textContent = '連線中，請稍候…';
 
   try{
+    /* 動態載入 kokoro-js（ES module），只在使用者確認下載時才載入 */
+    const { KokoroTTS } = await import('https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.mjs');
+    const MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
+
     const tts = await KokoroTTS.from_pretrained(MODEL_ID, {
-      dtype: 'q4',   /* q4 約 90MB，速度與品質平衡 */
-      device: 'wasm', /* wasm 相容性最廣，含 iOS Safari；有 WebGPU 的裝置自動走較快路徑 */
+      dtype: 'q4',
       progress_callback: (info) => {
-        if(_kokoroAborted) return;
+        if(window._kokoroAborted) return;
         if(info.status === 'downloading'){
           const pct = info.total > 0 ? Math.round((info.loaded / info.total) * 100) : 0;
           bar.style.width = pct + '%';
@@ -2793,47 +2786,39 @@ window.kokoroStartDownload = async function(){
       }
     });
 
-    if(_kokoroAborted){ _kokoroLoading=false; return; }
+    if(window._kokoroAborted){ window._kokoroLoading = false; return; }
 
     window._kokoroTTS = tts;
-    _kokoroLoading = false;
+    window._kokoroLoading = false;
 
-    /* 下載完成：更新選單顯示（移除「▸ 點此下載」提示）*/
-    const sel = document.getElementById('voice-select');
-    if(sel){
-      [...sel.options].forEach(o=>{
-        if(o.value.startsWith('kokoro:')) o.text = o.text.replace(' ▸ 點此下載','');
-      });
-    }
+    /* 下載完成：選單從單一入口換成六個音色 */
+    if(typeof window.renderVoiceSelect === 'function') window.renderVoiceSelect();
 
     status.textContent = '✅ 下載完成！';
     cancelBtn.textContent = '關閉';
     setTimeout(()=>{
       document.getElementById('kokoro-dl-overlay').classList.remove('show');
-      /* 播放一段測試音讓使用者確認聲音正常 */
       kokoroSpeak('Hello! This is Kokoro AI voice.');
     }, 800);
 
   } catch(err){
-    _kokoroLoading = false;
-    if(_kokoroAborted) return;
+    window._kokoroLoading = false;
+    if(window._kokoroAborted) return;
     status.textContent = '❌ 下載失敗，請檢查網路後再試。';
-    startBtn.style.display = 'inline-flex';
-    startBtn.textContent = '重試';
-    cancelBtn.textContent = '關閉';
+    document.getElementById('kokoro-start-btn').style.display = 'inline-flex';
+    document.getElementById('kokoro-start-btn').textContent = '重試';
+    document.getElementById('kokoro-cancel-btn').textContent = '關閉';
     console.error('Kokoro 下載失敗：', err);
   }
-};
+}
 
-/* ── Kokoro 播放函式（供 speakWord、playFull、playHL 呼叫） ── */
-window.kokoroSpeak = async function(text){
+async function kokoroSpeak(text){
   if(!window._kokoroTTS) return;
   try{
     const audio = await window._kokoroTTS.generate(text, {
       voice: CFG.kokoroVoiceId || 'af_heart',
       speed: CFG.rate,
     });
-    /* 把 Kokoro 生成的 Float32Array 轉成 AudioBuffer 播放 */
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const samples = audio.audio;
     const buf = ctx.createBuffer(1, samples.length, audio.sampling_rate);
@@ -2846,25 +2831,7 @@ window.kokoroSpeak = async function(text){
   } catch(e){
     console.error('Kokoro 播放失敗：', e);
   }
-};
-
-/* ── 初始化 ── */
-window._kokoroTTS = undefined;
-
-/* module script 載入後，若主 script 已經嘗試開 Modal 但當時函式還沒掛上來，現在補執行 */
-if(window._pendingKokoroModal){
-  window._pendingKokoroModal = false;
-  openKokoroModal();
 }
-
-/* 下載完成後重新渲染選單（單一入口 → 六個音色）*/
-const _origStart = window.kokoroStartDownload;
-window.kokoroStartDownload = async function(){
-  await _origStart();
-  if(window._kokoroTTS && typeof window.renderVoiceSelect==='function'){
-    window.renderVoiceSelect();
-  }
-};
 </script>
 
 <!-- 版權聲明 -->
