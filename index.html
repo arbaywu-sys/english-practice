@@ -999,8 +999,9 @@ function loadVoices(){
   const sel=document.getElementById('voice-select');
   if(!sel) return;
 
-  /* Kokoro 音色清單（放在選單最前面，value 用 "kokoro:音色ID" 標記） */
-  const KOKORO_VOICES=[
+  /* Kokoro 選單：下載前只顯示一個入口；下載後展開六個音色
+     用全域函式 renderVoiceSelect() 統一渲染，避免多次 loadVoices() 重複插入 */
+  window._kokoroVoices=[
     {id:'af_heart',  label:'Heart（美式女聲）'},
     {id:'af_bella',  label:'Bella（美式女聲）'},
     {id:'af_nicole', label:'Nicole（美式女聲）'},
@@ -1008,19 +1009,31 @@ function loadVoices(){
     {id:'bf_emma',   label:'Emma（英式女聲）'},
     {id:'bm_george', label:'George（英式男聲）'},
   ];
-  const kokoroLoaded=window._kokoroTTS!==undefined;
-  const kokoroGroup=`<optgroup label="── AI 真人語音（Kokoro）──">`
-    + KOKORO_VOICES.map(k=>`<option value="kokoro:${k.id}">🤖 ${k.label}${kokoroLoaded?'':' ▸ 點此下載'}</option>`).join('')
-    + `</optgroup>`;
 
-  const sysGroup=`<optgroup label="── 預設語音 ──">`
-    + _voices.map((v,i)=>{
-        const flag=normLang(v.lang)==='en-US'?'🇺🇸':normLang(v.lang)==='en-GB'?'🇬🇧':normLang(v.lang)==='en-AU'?'🇦🇺':normLang(v.lang)==='en-IN'?'🇮🇳':'🌐';
-        return `<option value="${i}">${flag} ${v.name} (${v.lang})</option>`;
-      }).join('')
-    + `</optgroup>`;
+  window.renderVoiceSelect=function(){
+    const s=document.getElementById('voice-select');
+    if(!s) return;
+    const kokoroReady=window._kokoroTTS && window._kokoroTTS!==undefined;
+    const kokoroGroup=kokoroReady
+      ? `<optgroup label="── AI 真人語音（Kokoro）──">`
+          + window._kokoroVoices.map(k=>`<option value="kokoro:${k.id}">🤖 ${k.label}</option>`).join('')
+          + `</optgroup>`
+      : `<optgroup label="── AI 真人語音（Kokoro）──"><option value="kokoro:download">🤖 下載 Kokoro AI 語音模型（約 90MB）</option></optgroup>`;
 
-  sel.innerHTML=kokoroGroup+sysGroup;
+    const sysGroup=`<optgroup label="── 預設語音 ──">`
+      + _voices.map((v,i)=>{
+          const flag=normLang(v.lang)==='en-US'?'🇺🇸':normLang(v.lang)==='en-GB'?'🇬🇧':normLang(v.lang)==='en-AU'?'🇦🇺':normLang(v.lang)==='en-IN'?'🇮🇳':'🌐';
+          return `<option value="${i}">${flag} ${v.name} (${v.lang})</option>`;
+        }).join('')
+      + `</optgroup>`;
+
+    /* 保留目前選取的值，重渲後還原 */
+    const prev=s.value;
+    s.innerHTML=kokoroGroup+sysGroup;
+    if(prev && [...s.options].some(o=>o.value===prev)) s.value=prev;
+  };
+
+  window.renderVoiceSelect();
   /* 排序後排在最前面的就是目前判斷最自然的聲音，當作預設值 */
   sel.value=0;
   CFG.voiceIdx=0;
@@ -1061,7 +1074,7 @@ setTimeout(loadVoices,2000);
   const isAndroid=/Android/i.test(navigator.userAgent);
   tip.innerHTML=isAndroid
     ? '如果想要更自然的聲音，可以到手機「設定→語言與輸入→文字轉語音輸出」，安裝並切換成別的語音引擎App（例如開源的Piper、Supertonic等），裝好後重新整理本頁，新的聲音就會出現在上方選單裡。'
-    : '到「聲音」選單試聽幾個選項，我們已經自動把品質較好的選項排在前面。桌機版的Chrome使用神經網路語音，聽起來更像真人發音。<br><br>想要更接近真人的 AI 語音？選單上方的「AI 真人語音（Kokoro）」系列，首次選取時會引導你下載 Kokoro 開源模型（約 90MB），下載後即可使用，之後不需重新下載。';
+    : '到「聲音」選單試聽幾個選項，我們已經自動把品質較好的選項排在前面。桌機版的Chrome使用神經網路語音，聽起來更像真人發音。想要更接近真人的 AI 語音？選單上方的「AI 真人語音（Kokoro）」，首次選取時會引導你下載 Kokoro 開源模型（約 90MB），下載後即可使用，之後不需重新下載。';
 })();
 
 function getVoice(){
@@ -1071,17 +1084,18 @@ function getVoice(){
 }
 
 function setVoiceByIndex(val){
-  /* 選到 Kokoro 音色 */
+  /* 選到 Kokoro */
   if(typeof val==='string' && val.startsWith('kokoro:')){
+    if(val==='kokoro:download' || !window._kokoroTTS){
+      /* 尚未下載，跳出引導 Modal；不改變目前播放聲音 */
+      if(typeof openKokoroModal==='function') openKokoroModal();
+      else window._pendingKokoroModal=true;
+      return;
+    }
+    /* 已下載，切換音色 */
     CFG.voiceIdx='kokoro';
     CFG.kokoroVoiceId=val.replace('kokoro:','');
-    if(!window._kokoroTTS){
-      /* 模型尚未下載，跳出引導 Modal */
-      openKokoroModal();
-    } else {
-      /* 已下載，直接播放測試音 */
-      kokoroSpeak('Hello, this is Kokoro AI voice.');
-    }
+    kokoroSpeak('Hello, this is Kokoro AI voice.');
     return;
   }
   /* 一般系統語音 */
@@ -2834,8 +2848,23 @@ window.kokoroSpeak = async function(text){
   }
 };
 
-/* ── 掛載到 window，供非 module script 的 speakWord 判斷使用 ── */
-window._kokoroTTS = undefined; /* 初始化為 undefined（下載前）*/
+/* ── 初始化 ── */
+window._kokoroTTS = undefined;
+
+/* module script 載入後，若主 script 已經嘗試開 Modal 但當時函式還沒掛上來，現在補執行 */
+if(window._pendingKokoroModal){
+  window._pendingKokoroModal = false;
+  openKokoroModal();
+}
+
+/* 下載完成後重新渲染選單（單一入口 → 六個音色）*/
+const _origStart = window.kokoroStartDownload;
+window.kokoroStartDownload = async function(){
+  await _origStart();
+  if(window._kokoroTTS && typeof window.renderVoiceSelect==='function'){
+    window.renderVoiceSelect();
+  }
+};
 </script>
 
 <!-- 版權聲明 -->
