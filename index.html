@@ -1027,14 +1027,14 @@ function loadVoices(){
         }).join('')
       + `</optgroup>`;
 
-    /* 保留目前選取的值，重渲後還原 */
+    /* 保留目前選取的值，重渲後還原；但如果是 kokoro:download 不還原（避免它被當成預設）*/
     const prev=s.value;
     s.innerHTML=kokoroGroup+sysGroup;
-    if(prev && [...s.options].some(o=>o.value===prev)) s.value=prev;
+    if(prev && prev!=='kokoro:download' && [...s.options].some(o=>o.value===prev)) s.value=prev;
   };
 
   window.renderVoiceSelect();
-  /* 排序後排在最前面的就是目前判斷最自然的聲音，當作預設值 */
+  /* 預設選第一個系統語音，不讓 Kokoro 入口被預設選中 */
   sel.value=0;
   CFG.voiceIdx=0;
   /* 但「預設播放值」跟「選單顯示順序」分開處理：如果裝置上有Samantha，固定指定她當預設，
@@ -1060,11 +1060,12 @@ function loadVoices(){
 })();
 
 speechSynthesis.onvoiceschanged=loadVoices;
-/* iOS 需要多次嘗試才能載入聲音清單 */
+/* iOS/Android 需要多次嘗試才能載入聲音清單，Android 部分裝置特別慢，加長到 5 秒 */
 setTimeout(loadVoices,100);
 setTimeout(loadVoices,500);
 setTimeout(loadVoices,1000);
 setTimeout(loadVoices,2000);
+setTimeout(loadVoices,5000);
 
 /* 「想聽不同聲音？」展開內容依裝置顯示不同說明：Android可以直接換系統TTS引擎拿到更好的聲音，
    跟iOS/桌機（排序已經自動處理好，使用者只要去選單試聽）的情況不一樣，分開講才不會混亂 */
