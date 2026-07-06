@@ -2863,6 +2863,20 @@ async function kokoroSpeak(text){
 <button class="admin-btn" onclick="openAdmin()" title="管理員登入">⚙</button>
 
 <!-- 管理員 Modal -->
+<!-- Kokoro 下載 Modal -->
+<div class="admin-overlay" id="kokoro-dl-overlay" onclick="if(event.target===this)kokoroCancelDownload()">
+  <div class="kokoro-modal">
+    <h3>🤖 AI 真人語音（Kokoro）</h3>
+    <p>Kokoro 是開源 AI 語音模型，發音更接近真人。首次使用需下載約 <strong>90MB</strong> 的模型檔案，下載完成後存在瀏覽器中，之後不需要重新下載。模型由 <strong>Kokoro</strong>（Apache 2.0 授權）提供。</p>
+    <div class="kokoro-progress"><div class="kokoro-progress-bar" id="kokoro-prog-bar"></div></div>
+    <div class="kokoro-status" id="kokoro-status">準備好了嗎？點「開始下載」即可開始。</div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="btn" id="kokoro-cancel-btn" onclick="kokoroCancelDownload()">取消</button>
+      <button class="btn primary" id="kokoro-start-btn" onclick="kokoroStartDownload()">開始下載</button>
+    </div>
+  </div>
+</div>
+
 <div class="admin-overlay" id="admin-overlay">
 <div class="admin-modal">
   <div id="admin-login-panel">
