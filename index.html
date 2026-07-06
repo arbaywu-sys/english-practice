@@ -369,9 +369,12 @@ body { font-size: 16px; }
     <div class="srow">
       <label>聲音</label>
       <div style="flex:1;display:flex;flex-direction:column;gap:6px">
-        <select id="voice-select" onchange="setVoiceByIndex(this.value)" style="font-family:inherit;font-size:13px;padding:6px 8px;border:0.5px solid #ccc;border-radius:8px;background:#f8f8f5;color:#1a1a1a;cursor:pointer;width:100%">
-          <option value="">載入中...</option>
-        </select>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select id="voice-select" onchange="setVoiceByIndex(this.value)" style="font-family:inherit;font-size:13px;padding:6px 8px;border:0.5px solid #ccc;border-radius:8px;background:#f8f8f5;color:#1a1a1a;cursor:pointer;flex:1">
+            <option value="">載入中...</option>
+          </select>
+          <button id="kokoro-btn" onclick="onKokoroBtnClick()" style="flex-shrink:0;font-family:inherit;font-size:12px;padding:6px 10px;border:none;border-radius:8px;background:#185FA5;color:white;cursor:pointer;line-height:1.4;white-space:nowrap">🤖 AI<br>語音</button>
+        </div>
         <button onclick="toggleVoiceTip()" style="display:inline-flex;align-items:center;gap:4px;background:none;border:none;padding:2px 2px;cursor:pointer;font-family:inherit">
           <span style="font-size:12px;color:#B06030">💡 想聽不同聲音？</span>
           <span id="voice-tip-arrow" style="font-size:12px;color:#888;transition:transform 0.2s">▼</span>
@@ -1013,12 +1016,6 @@ function loadVoices(){
   window.renderVoiceSelect=function(){
     const s=document.getElementById('voice-select');
     if(!s) return;
-    const kokoroReady=!!window._kokoroTTS;
-    const kokoroGroup=kokoroReady
-      ? `<optgroup label="── AI 真人語音（Kokoro）──">`
-          + window._kokoroVoices.map(k=>`<option value="kokoro:${k.id}">🤖 ${k.label}</option>`).join('')
-          + `</optgroup>`
-      : `<optgroup label="── AI 真人語音（Kokoro）──"><option value="kokoro:download">🤖 下載 Kokoro AI 語音模型（約 90MB）</option></optgroup>`;
 
     const sysGroup=`<optgroup label="── 預設語音 ──">`
       + _voices.map((v,i)=>{
@@ -1027,10 +1024,29 @@ function loadVoices(){
         }).join('')
       + `</optgroup>`;
 
-    /* 保留目前選取的值，重渲後還原；但如果是 kokoro:download 不還原（避免它被當成預設）*/
+    /* Kokoro 下載後，在選單最前面加 Kokoro 音色群組 */
+    const kokoroReady=!!window._kokoroTTS;
+    const kokoroGroup=kokoroReady
+      ? `<optgroup label="── AI 真人語音（Kokoro）──">`
+          + window._kokoroVoices.map(k=>`<option value="kokoro:${k.id}">🤖 ${k.label}</option>`).join('')
+          + `</optgroup>`
+      : '';
+
     const prev=s.value;
     s.innerHTML=kokoroGroup+sysGroup;
-    if(prev && prev!=='kokoro:download' && [...s.options].some(o=>o.value===prev)) s.value=prev;
+    if(prev && [...s.options].some(o=>o.value===prev)) s.value=prev;
+
+    /* 更新按鈕狀態 */
+    const btn=document.getElementById('kokoro-btn');
+    if(btn){
+      if(kokoroReady){
+        btn.style.background='#3a7d3a';
+        btn.innerHTML='🤖 AI<br>已安裝';
+      } else {
+        btn.style.background='#185FA5';
+        btn.innerHTML='🤖 AI<br>語音';
+      }
+    }
   };
 
   window.renderVoiceSelect();
@@ -1084,15 +1100,20 @@ function getVoice(){
   return _voices.find(v=>normLang(v.lang)==='en-US')||_voices[0]||null;
 }
 
+function onKokoroBtnClick(){
+  if(window._kokoroTTS){
+    /* 已安裝：把選單切到第一個 Kokoro 音色 */
+    const sel=document.getElementById('voice-select');
+    const first=[...sel.options].find(o=>o.value.startsWith('kokoro:'));
+    if(first){ sel.value=first.value; setVoiceByIndex(first.value); }
+  } else {
+    openKokoroModal();
+  }
+}
 function setVoiceByIndex(val){
-  /* 選到 Kokoro */
+  /* 選到 Kokoro 音色 */
   if(typeof val==='string' && val.startsWith('kokoro:')){
-    if(val==='kokoro:download' || !window._kokoroTTS){
-      /* 尚未下載，跳出引導 Modal；不改變目前播放聲音 */
-      openKokoroModal();
-      return;
-    }
-    /* 已下載，切換音色 */
+    if(!window._kokoroTTS) return;
     CFG.voiceIdx='kokoro';
     CFG.kokoroVoiceId=val.replace('kokoro:','');
     kokoroSpeak('Hello, this is Kokoro AI voice.');
@@ -2743,10 +2764,10 @@ function kokoroCancelDownload(){
   window._kokoroAborted = true;
   document.getElementById('kokoro-dl-overlay').classList.remove('show');
   if(!window._kokoroTTS){
-    const sel = document.getElementById('voice-select');
+    const sel=document.getElementById('voice-select');
     if(sel){
-      const first = [...sel.options].find(o => !o.value.startsWith('kokoro:'));
-      if(first){ sel.value = first.value; CFG.voiceIdx = parseInt(first.value); CFG.kokoroVoiceId = null; }
+      const first=[...sel.options].find(o=>!o.value.startsWith('kokoro:'));
+      if(first){ sel.value=first.value; CFG.voiceIdx=parseInt(first.value); CFG.kokoroVoiceId=null; }
     }
   }
 }
