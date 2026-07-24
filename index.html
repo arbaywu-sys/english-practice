@@ -1446,19 +1446,40 @@ async function fetchTranslationFromAppsScript(word){
   return null;
 }
 
+/* ── 自由查字：唯一能輸入任意字串的入口，所有防護集中在這裡 ── */
 async function lookupWord(){
   const input=document.getElementById('lookup-input');
-  const word=input.value.trim();
+  const word=normalizeWord(input.value);   /* 彎撇號統一轉直的 */
   const resultEl=document.getElementById('lookup-result');
   if(!word){ resultEl.innerHTML='<div class="st" style="color:#A32D2D">請先輸入英文字</div>'; return; }
-  if(!/^[a-zA-Z\s\-']+$/.test(word)){ resultEl.innerHTML='<div class="st" style="color:#A32D2D">請輸入英文字（不支援中文或符號）</div>'; return; }
+
+  /* 亂碼過濾：擋掉 banananana、asdf123、bbbccc 這類，不送到後端消耗翻譯額度 */
+  if(!isValidWord(word)){
+    resultEl.innerHTML='<div class="st" style="color:#A32D2D">請輸入有效的英文單字</div>';
+    return;
+  }
+
+  const wl=word.toLowerCase();
+
+  /* 黑名單：之前確認過真的查不到的字，直接顯示，不重複連線 */
+  if(_notFoundCache[wl]){
+    resultEl.innerHTML=`<div class="st" style="color:#A32D2D">查不到「${word.replace(/</g,'&lt;')}」，請確認拼字是否正確</div>`;
+    return;
+  }
+
+  /* 限流：10 秒內超過 12 次才擋，正常查字不會撞到 */
+  if(isRateLimited()){
+    resultEl.innerHTML='<div class="st" style="color:#A32D2D">查詢過於頻繁，請稍候幾秒再試</div>';
+    return;
+  }
 
   resultEl.innerHTML='<div class="st">查詢中…</div>';
 
-  const wl=word.toLowerCase();
+  /* 翻譯優先用本地快取，省一次連線；音標仍需查（快取結構不同） */
+  const cachedZh=_transCache[wl];
   const [phResult, zhResult]=await Promise.allSettled([
     fetchPhoneticFromAppsScript(wl),
-    fetchTranslationFromAppsScript(wl)
+    cachedZh ? Promise.resolve(cachedZh) : fetchTranslationFromAppsScript(wl)
   ]);
 
   const phData = phResult.status==='fulfilled' ? phResult.value : {phonetic:null, definitions:[]};
@@ -1466,7 +1487,12 @@ async function lookupWord(){
   const definitions = phData.definitions || [];
   const zh = zhResult.status==='fulfilled' ? zhResult.value : null;
 
+  /* 查到翻譯就存進本地快取，下次同一個字不用再連線 */
+  if(zh && !cachedZh){ _transCache[wl]=zh; saveTransCache(); }
+
   if(!phonetic && !zh && definitions.length===0){
+    /* 音標和翻譯都沒有 → 這個字真的查不到，加入黑名單 */
+    _notFoundCache[wl]=1; saveNotFoundCache();
     resultEl.innerHTML=`<div class="st" style="color:#A32D2D">查不到「${word.replace(/</g,'&lt;')}」，請確認拼字是否正確</div>`;
     return;
   }
@@ -1544,35 +1570,60 @@ function buildTransCache(){
 }
 
 /* ══════════════════════════════════════════════
-   查詢前的有效性檢查（擋掉亂碼，避免浪費後端翻譯配額）
-   ══════════════════════════════════════════════ */
-function isValidWord(w){
-  if(!w) return false;
-  const s=String(w).trim();
+   自由查字專用的有效性檢查
+   ══════════════════════════════════════════════
+   只用在「自由查字」這個輸入框，因為那是唯一能打進任意字串的入口。
+   中英對照點單字不套用這些規則——那些字來自文章本身，本來就是真實英文，
+   套規則只會誤擋（例如 dry 沒有 aeiou 母音）。 */
 
-  /* 1. 長度上限 30（英文最長常見單字約 24 字母，30 足夠寬鬆不會誤擋） */
+/* 撇號正規化：手機輸入法和 Word 會產生彎引號 '（U+2019），
+   跟一般直撇號 ' 是不同字元。統一轉成直的，讓 don't 和 don't 共用同一筆快取。 */
+function normalizeWord(w){
+  return String(w||'').trim().replace(/[\u2018\u2019\u02BC]/g, "'");
+}
+
+function isValidWord(w){
+  const s=normalizeWord(w);
+  if(!s) return false;
+
+  /* 1. 長度上限 30（英文最長常見單字約 24 字母） */
   if(s.length>30) return false;
 
-  /* 2. 只允許英文字母、連字號、撇號（don't、well-known 這類正常字要放行） */
-  if(!/^[a-zA-Z'-]+$/.test(s)) return false;
+  /* 2. 允許字元：英文字母、歐語重音字母（café/naïve/résumé）、
+        數字與句點（COVID-19、3D、U.S.）、連字號、撇號。
+        不放行中文日文，避免有人貼中文進來白白消耗翻譯額度。 */
+  if(!/^[a-zA-Z\u00C0-\u017F0-9.'-]+$/.test(s)) return false;
 
-  /* 3. 必須含有母音（正常英文字幾乎都有；擋掉 bbbccc 這類亂敲） */
-  if(!/[aeiouAEIOU]/.test(s)) return false;
+  /* 3. 必須含母音——y 也算（dry、my、why、gym、rhythm 都靠 y 當母音）。
+        兩類例外跳過檢查：
+        (a) 含數字或句點的縮寫、型號（3D、Dr.、Mr.、U.S.）
+        (b) 全大寫 2～5 字的縮寫（TV、PC、DVD、USB、DNA、BBC、GDP）
+        限定全大寫，所以小寫的 bbbccc 這類亂敲仍然擋得住。 */
+  const isAbbr=/[0-9.]/.test(s) || (/^[A-Z]{2,5}$/.test(s));
+  if(!isAbbr && !/[aeiouy\u00C0-\u017FAEIOUY]/.test(s)) return false;
 
-  /* 4. 擋連續重複：同一字元連續 3 次以上（aaa、bbbb），
-        或兩字元組合連續重複 3 次以上（bananana、bababab） */
+  /* 4. 擋連續重複：同一字元連續 3 次以上（aaa、hellooooo），
+        或兩字元組合連續重複 3 次以上（banananana、bababab）。
+        代價是 brrr、shhh 這類擬聲詞也會被擋，但教育性文章不會用到。 */
   if(/(.)\1{2,}/.test(s)) return false;
   if(/(..)\1{2,}/i.test(s)) return false;
+
+  /* 5. 鍵盤亂敲偵測：鍵盤上相鄰按鍵的連續序列，
+        沒有任何英文單字包含這些組合（已用真實單字驗證無誤擋） */
+  const KB=['asdf','sdfg','dfgh','fghj','ghjk','hjkl','qwer','wert','erty','rtyu',
+            'tyui','yuio','uiop','zxcv','xcvb','cvbn','vbnm','wasd','qaz','wsx','edc'];
+  const low=s.toLowerCase();
+  if(KB.some(k=>low.includes(k))) return false;
 
   return true;
 }
 
-/* ── 查詢限流：短時間內大量查詢視為誤觸或惡意操作 ── */
+/* ── 查詢限流：只作用於自由查字，中英對照點單字不受限 ── */
 let _queryTimes=[];
 function isRateLimited(){
   const now=Date.now();
   _queryTimes=_queryTimes.filter(t=>now-t<10000); /* 只保留近 10 秒 */
-  if(_queryTimes.length>=8) return true;          /* 10 秒內超過 8 次就擋 */
+  if(_queryTimes.length>=12) return true;         /* 10 秒內超過 12 次就擋 */
   _queryTimes.push(now);
   return false;
 }
@@ -1584,15 +1635,11 @@ function saveNotFoundCache(){
   try{ localStorage.setItem('_notFoundCache', JSON.stringify(_notFoundCache)); }catch(e){}
 }
 
-/* ── 中英對照翻譯查詢（優先順序：括號標注→本地快取→黑名單→Apps Script快取→Google翻譯） ── */
+/* ── 中英對照翻譯查詢（優先順序：括號標注→本地快取→黑名單→Apps Script快取→Google翻譯） ──
+   這裡的單字來自文章本身，一定是真實英文，所以不套用 isValidWord 的亂碼規則，
+   也不限流——孩子讀文章時愛點幾個字就點幾個字。 */
 async function fetchTranslation(word, vocabMap, event){
-  const wl=word.toLowerCase();
-
-  /* 0. 有效性檢查：亂碼直接擋掉，不送到後端 */
-  if(!isValidWord(word)){
-    showWordPopup(word,'不是有效的單字',event);
-    return;
-  }
+  const wl=normalizeWord(word).toLowerCase();
 
   /* 1. 先查括號標注 */
   if(vocabMap&&vocabMap[wl]){
@@ -1609,13 +1656,8 @@ async function fetchTranslation(word, vocabMap, event){
     showWordPopup(word,'查無此字',event);
     return;
   }
-  /* 4. 限流檢查 */
-  if(isRateLimited()){
-    showWordPopup(word,'查詢過於頻繁，請稍候',event);
-    return;
-  }
 
-  /* 5. 查 Apps Script（Sheets快取→Google翻譯）*/
+  /* 4. 查 Apps Script（Sheets快取→Google翻譯）*/
   showWordPopup(word,'查詢中…',event);
   try{
     const res=await fetch(APPS_SCRIPT_URL,{
